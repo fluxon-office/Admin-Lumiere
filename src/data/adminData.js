@@ -1,0 +1,196 @@
+const initialAppointments = [
+  {
+    id: 1042,
+    client: 'Giulia Dias',
+    phone: '(11) 98444-2091',
+    email: 'giulia.dias@email.com',
+    service: 'Botox',
+    date: '2026-05-18',
+    time: '09:30',
+    status: 'pendente',
+    source: 'Site',
+    notes: 'Prefere atendimento pela manhã. Primeira avaliação.',
+    history: ['Solicitado pelo site em 17/05 às 11:42'],
+  },
+  {
+    id: 1041,
+    client: 'Ana Moreno',
+    phone: '(11) 97321-4410',
+    email: 'ana.moreno@email.com',
+    service: 'Limpeza de pele',
+    date: '2026-05-18',
+    time: '11:00',
+    status: 'confirmado',
+    source: 'WhatsApp',
+    notes: 'Cliente recorrente. Confirmou disponibilidade.',
+    history: ['Solicitado pelo site em 16/05 às 15:20', 'Confirmado por Beatriz em 16/05 às 16:02'],
+  },
+  {
+    id: 1046,
+    client: 'Larissa Nunes',
+    phone: '(11) 98812-3320',
+    email: 'larissa.nunes@email.com',
+    service: 'Peeling',
+    date: '2026-05-18',
+    time: '13:30',
+    status: 'confirmado',
+    source: 'Site',
+    notes: 'Quer renovar a pele antes de um evento.',
+    history: ['Solicitado pelo site em 17/05 às 13:10'],
+  },
+  {
+    id: 1047,
+    client: 'Renata Alves',
+    phone: '(11) 97200-8122',
+    email: 'renata.alves@email.com',
+    service: 'Drenagem linfática',
+    date: '2026-05-18',
+    time: '15:00',
+    status: 'pendente',
+    source: 'Site',
+    notes: 'Primeira sessão do pacote corporal.',
+    history: ['Solicitado pelo site em 17/05 às 14:05'],
+  },
+  {
+    id: 1048,
+    client: 'Patrícia Moura',
+    phone: '(11) 96514-4409',
+    email: 'patricia.moura@email.com',
+    service: 'Massagem relaxante',
+    date: '2026-05-18',
+    time: '16:30',
+    status: 'confirmado',
+    source: 'Telefone',
+    notes: 'Atendimento recorrente no fim da tarde.',
+    history: ['Solicitado por telefone em 17/05 às 16:40'],
+  },
+  {
+    id: 1049,
+    client: 'Bianca Ribeiro',
+    phone: '(11) 98212-6678',
+    email: 'bianca.ribeiro@email.com',
+    service: 'Bioestimulador',
+    date: '2026-05-18',
+    time: '18:00',
+    status: 'remarcar',
+    source: 'Site',
+    notes: 'Pediu opção de horário mais cedo, se houver encaixe.',
+    history: ['Solicitado pelo site em 17/05 às 17:22'],
+  },
+  {
+    id: 1040,
+    client: 'Evelyn Silva',
+    phone: '(11) 95678-0092',
+    email: 'evelyn.silva@email.com',
+    service: 'Preenchimento labial',
+    date: '2026-05-19',
+    time: '15:00',
+    status: 'remarcar',
+    source: 'Site',
+    notes: 'Pediu troca para quinta-feira no período da tarde.',
+    history: ['Solicitado em 15/05 às 09:14', 'Cliente pediu remarcação em 16/05 às 18:33'],
+  },
+  {
+    id: 1039,
+    client: 'Marina Costa',
+    phone: '(11) 99114-7770',
+    email: 'marina.costa@email.com',
+    service: 'Drenagem linfática',
+    date: '2026-05-20',
+    time: '10:00',
+    status: 'cancelado',
+    source: 'Telefone',
+    notes: 'Cancelamento solicitado pela paciente.',
+    history: ['Solicitado em 14/05 às 13:02', 'Cancelado pela paciente em 16/05 às 10:11'],
+  },
+  {
+    id: 1038,
+    client: 'Camila Rocha',
+    phone: '(11) 94510-3388',
+    email: 'camila.rocha@email.com',
+    service: 'Microagulhamento',
+    date: '2026-05-21',
+    time: '14:00',
+    status: 'pendente',
+    source: 'Site',
+    notes: 'Quer entender os preparos antes da confirmação.',
+    history: ['Solicitado pelo site em 17/05 às 08:55'],
+  },
+];
+
+const initialServices = [
+  { id: 1, name: 'Botox', category: 'Facial', duration: '45 min', price: 'R$ 690', active: true, published: true, description: 'Suavização de linhas de expressão com planejamento natural.' },
+  { id: 2, name: 'Limpeza de pele', category: 'Facial', duration: '60 min', price: 'R$ 180', active: true, published: true, description: 'Higienização profunda, extração cuidadosa e renovação da pele.' },
+  { id: 3, name: 'Preenchimento labial', category: 'Labial', duration: '50 min', price: 'R$ 850', active: true, published: true, description: 'Definição de contorno e volume com acabamento delicado.' },
+  { id: 4, name: 'Drenagem linfática', category: 'Corporal', duration: '50 min', price: 'R$ 160', active: true, published: true, description: 'Manobras para reduzir retenção e favorecer leveza corporal.' },
+  { id: 5, name: 'Microagulhamento', category: 'Facial', duration: '70 min', price: 'R$ 420', active: true, published: true, description: 'Estímulo controlado para textura, cicatrizes e qualidade cutânea.' },
+  { id: 6, name: 'Peeling', category: 'Facial', duration: '40 min', price: 'R$ 260', active: false, published: false, description: 'Renovação da superfície da pele com protocolo personalizado.' },
+];
+
+const statusLabels = {
+  pendente: 'Pendente',
+  confirmado: 'Confirmado',
+  remarcar: 'Remarcar',
+  cancelado: 'Cancelado',
+};
+
+const statusTone = {
+  pendente: 'status-pending',
+  confirmado: 'status-confirmed',
+  remarcar: 'status-reschedule',
+  cancelado: 'status-canceled',
+};
+
+const filters = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'pendente', label: 'Pendentes' },
+  { id: 'confirmado', label: 'Confirmados' },
+  { id: 'remarcar', label: 'Remarcação' },
+  { id: 'cancelado', label: 'Cancelados' },
+];
+
+const navItems = [
+  { id: 'agenda', label: 'Agenda' },
+  { id: 'solicitacoes', label: 'Solicitações' },
+  { id: 'clientes', label: 'Clientes' },
+  { id: 'servicos', label: 'Serviços' },
+];
+
+const emptyServiceForm = {
+  name: '',
+  category: 'Facial',
+  duration: '45 min',
+  price: 'R$ ',
+  description: '',
+  active: true,
+  published: true,
+};
+
+const emptyAppointmentForm = {
+  client: '',
+  phone: '',
+  email: '',
+  service: 'Botox',
+  date: '2026-05-18',
+  time: '09:00',
+  notes: '',
+};
+
+const sectionTitles = {
+  agenda: 'Agenda da Lumiere Clinic',
+  solicitacoes: 'Solicitações de agendamento',
+  clientes: 'Clientes e contatos',
+  servicos: 'Serviços e procedimentos',
+};
+
+export {
+  emptyAppointmentForm,
+  emptyServiceForm,
+  filters,
+  initialAppointments,
+  initialServices,
+  navItems,
+  sectionTitles,
+  statusLabels,
+  statusTone,
+};
