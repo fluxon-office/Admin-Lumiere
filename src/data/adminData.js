@@ -159,6 +159,7 @@ const navItems = [
 const emptyServiceForm = {
   name: '',
   category: 'Facial',
+  professional: '',
   duration: '45 min',
   price: 'R$ ',
   description: '',

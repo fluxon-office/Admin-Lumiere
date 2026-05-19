@@ -153,11 +153,13 @@ function normalizeService(service) {
     id: service.id,
     name: service.nome || '',
     category: service.categoria || 'Facial',
+    professional: service.profissionalPrincipal || '',
     duration: `${service.duracaoMinutos || 60} min`,
     price: formatPrice(service.preco),
     active: service.ativo !== false,
     published: service.publicado !== false,
     description: service.descricao || '',
+    status: service.status || (service.ativo !== false ? 'ativo' : 'inativo'),
   };
 }
 
@@ -166,6 +168,7 @@ function buildServicePayload(service) {
     nome: service.name,
     descricao: service.description,
     categoria: service.category,
+    profissionalPrincipal: service.professional,
     preco: parsePrice(service.price),
     duracaoMinutos: parseDuration(service.duration),
     ativo: service.active,
@@ -258,8 +261,27 @@ async function fetchClients(auth, busca = '') {
   return Array.isArray(payload) ? payload.map(normalizeClient) : [];
 }
 
-async function fetchServices(auth) {
-  const payload = await apiRequest('/servicos/admin', { auth });
+async function fetchServices(auth, filters = {}) {
+  const query = new URLSearchParams();
+
+  if (filters.name) {
+    query.set('nome', filters.name);
+  }
+
+  if (filters.category && filters.category !== 'todos') {
+    query.set('categoria', filters.category);
+  }
+
+  if (filters.status && filters.status !== 'todos') {
+    query.set('status', filters.status);
+  }
+
+  if (filters.professional) {
+    query.set('profissional', filters.professional);
+  }
+
+  const path = query.size ? `/servicos/admin?${query.toString()}` : '/servicos/admin';
+  const payload = await apiRequest(path, { auth });
   return Array.isArray(payload) ? payload.map(normalizeService) : [];
 }
 
@@ -274,10 +296,18 @@ async function saveService(auth, service) {
   return normalizeService(payload);
 }
 
+async function deleteService(auth, id) {
+  await apiRequest(`/servicos/${id}`, {
+    auth,
+    method: 'DELETE',
+  });
+}
+
 export {
   API_BASE_URL,
   bootstrapFirstUser,
   createAppointment,
+  deleteService,
   fetchAppointments,
   fetchClients,
   fetchServices,

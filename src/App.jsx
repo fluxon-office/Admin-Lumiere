@@ -14,6 +14,7 @@ import { navItems, sectionTitles, statusLabels } from './data/adminData';
 import {
   bootstrapFirstUser,
   createAppointment as createAppointmentRequest,
+  deleteService as deleteServiceRequest,
   fetchAppointments,
   fetchClients,
   fetchServices,
@@ -35,6 +36,12 @@ function AdminView({ auth }) {
   const [search, setSearch] = useState('');
   const [globalSearch, setGlobalSearch] = useState('');
   const [clientSearch, setClientSearch] = useState('');
+  const [serviceFilters, setServiceFilters] = useState({
+    name: '',
+    category: 'todos',
+    status: 'todos',
+    professional: '',
+  });
   const [detailOpen, setDetailOpen] = useState(false);
   const [clientDetail, setClientDetail] = useState(null);
   const [appointmentModalOpen, setAppointmentModalOpen] = useState(false);
@@ -47,12 +54,17 @@ function AdminView({ auth }) {
     [globalSearch, search],
   );
 
+  async function loadServices(currentAuth, currentFilters) {
+    const servicesPayload = await fetchServices(currentAuth, currentFilters);
+    setServices(servicesPayload);
+  }
+
   useEffect(() => {
     let ignore = false;
 
-    async function loadServices() {
+    async function loadServicesData() {
       try {
-        const servicesPayload = await fetchServices(auth);
+        const servicesPayload = await fetchServices(auth, serviceFilters);
 
         if (!ignore) {
           setServices(servicesPayload);
@@ -64,12 +76,12 @@ function AdminView({ auth }) {
       }
     }
 
-    loadServices();
+    loadServicesData();
 
     return () => {
       ignore = true;
     };
-  }, [auth]);
+  }, [auth, serviceFilters]);
 
   useEffect(() => {
     let ignore = false;
@@ -225,15 +237,8 @@ function AdminView({ auth }) {
 
   async function saveService(service) {
     try {
-      const savedService = await saveServiceRequest(auth, service);
-
-      setServices((current) => {
-        if (service.id) {
-          return current.map((item) => (item.id === service.id ? savedService : item));
-        }
-
-        return [savedService, ...current];
-      });
+      await saveServiceRequest(auth, service);
+      await loadServices(auth, serviceFilters);
       setToast(service.id ? 'Servico atualizado com sucesso.' : 'Servico cadastrado com sucesso.');
     } catch (error) {
       setToast(error.message || 'Nao foi possivel salvar o servico.');
@@ -253,6 +258,38 @@ function AdminView({ auth }) {
       [field]: !service[field],
     });
     setToast(field === 'published' ? 'Visibilidade no site atualizada.' : 'Status do servico atualizado.');
+  }
+
+  async function deleteService(id, name) {
+    const confirmed = window.confirm(`Excluir o servico ${name}?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteServiceRequest(auth, id);
+      await loadServices(auth, serviceFilters);
+      setToast('Servico excluido com sucesso.');
+    } catch (error) {
+      setToast(error.message || 'Nao foi possivel excluir o servico.');
+    }
+  }
+
+  function updateServiceFilter(field, value) {
+    setServiceFilters((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  function resetServiceFilters() {
+    setServiceFilters({
+      name: '',
+      category: 'todos',
+      status: 'todos',
+      professional: '',
+    });
   }
 
   return (
@@ -336,6 +373,10 @@ function AdminView({ auth }) {
         )}
         {!loadingData && activeSection === 'servicos' && (
           <ServicesView
+            filters={serviceFilters}
+            onFilterChange={updateServiceFilter}
+            onFiltersReset={resetServiceFilters}
+            onServiceDelete={deleteService}
             services={services}
             onServiceSave={saveService}
             onServiceToggle={toggleService}

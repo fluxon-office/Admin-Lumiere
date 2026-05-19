@@ -1,7 +1,15 @@
 import { useRef, useState } from 'react';
 import { emptyServiceForm } from '../../data/adminData';
 
-function ServicesView({ onServiceSave, onServiceToggle, services }) {
+function ServicesView({
+  filters,
+  onFilterChange,
+  onFiltersReset,
+  onServiceDelete,
+  onServiceSave,
+  onServiceToggle,
+  services,
+}) {
   const [editingService, setEditingService] = useState(null);
   const [serviceForm, setServiceForm] = useState(emptyServiceForm);
   const [saving, setSaving] = useState(false);
@@ -18,6 +26,7 @@ function ServicesView({ onServiceSave, onServiceToggle, services }) {
     setServiceForm({
       name: service.name,
       category: service.category,
+      professional: service.professional,
       duration: service.duration,
       price: service.price,
       description: service.description,
@@ -49,6 +58,7 @@ function ServicesView({ onServiceSave, onServiceToggle, services }) {
         id: editingService,
         ...serviceForm,
         name: serviceForm.name.trim(),
+        professional: serviceForm.professional.trim(),
         description: serviceForm.description.trim(),
       });
       resetForm();
@@ -68,17 +78,44 @@ function ServicesView({ onServiceSave, onServiceToggle, services }) {
           <button className="primary-action" type="button" onClick={resetForm}>Novo servico</button>
         </div>
 
+        <div className="service-filters">
+          <input
+            placeholder="Buscar por nome"
+            value={filters.name}
+            onChange={(event) => onFilterChange('name', event.target.value)}
+          />
+          <select value={filters.category} onChange={(event) => onFilterChange('category', event.target.value)}>
+            <option value="todos">Todas as categorias</option>
+            <option value="Facial">Facial</option>
+            <option value="Corporal">Corporal</option>
+            <option value="Labial">Labial</option>
+            <option value="Bem-estar">Bem-estar</option>
+          </select>
+          <select value={filters.status} onChange={(event) => onFilterChange('status', event.target.value)}>
+            <option value="todos">Todos os status</option>
+            <option value="ativo">Ativo</option>
+            <option value="inativo">Inativo</option>
+          </select>
+          <input
+            placeholder="Filtrar por profissional"
+            value={filters.professional}
+            onChange={(event) => onFilterChange('professional', event.target.value)}
+          />
+          <button className="secondary-action" type="button" onClick={onFiltersReset}>Limpar filtros</button>
+        </div>
+
         <div className="table-panel">
           {services.map((service) => (
             <article className="service-row" key={service.id}>
               <div>
                 <strong>{service.name}</strong>
                 <span>{service.category}</span>
+                <small>{service.professional}</small>
               </div>
               <span>{service.duration}</span>
               <span>{service.price}</span>
               <span className={`service-state ${service.active ? 'is-live' : 'is-paused'}`}>
-                {service.active ? 'Ativo' : 'Pausado'}
+                {service.active ? 'Ativo' : 'Inativo'}
               </span>
               <span className={`service-state ${service.published ? 'is-live' : 'is-paused'}`}>
                 {service.published ? 'No site' : 'Oculto'}
@@ -86,11 +123,12 @@ function ServicesView({ onServiceSave, onServiceToggle, services }) {
               <div className="service-actions">
                 <button type="button" onClick={() => handleEdit(service)}>Editar</button>
                 <button type="button" onClick={() => onServiceToggle(service.id, 'active')}>
-                  {service.active ? 'Pausar' : 'Ativar'}
+                  {service.active ? 'Inativar' : 'Ativar'}
                 </button>
                 <button type="button" onClick={() => onServiceToggle(service.id, 'published')}>
-                  {service.published ? 'Remover do site' : 'Publicar no site'}
+                  {service.published ? 'Ocultar' : 'Publicar'}
                 </button>
+                <button className="danger-action" type="button" onClick={() => onServiceDelete(service.id, service.name)}>Excluir</button>
               </div>
             </article>
           ))}
@@ -101,7 +139,7 @@ function ServicesView({ onServiceSave, onServiceToggle, services }) {
         <p className="eyebrow">{editingService ? 'Editar servico' : 'Novo servico'}</p>
         <h2>{editingService ? 'Atualizar procedimento' : 'Cadastrar procedimento'}</h2>
         <p className="form-helper">
-          Servicos marcados para publicacao aparecem no site publico quando estiverem ativos.
+          Servicos ativos e publicados ficam disponiveis no fluxo publico da clinica.
         </p>
 
         <form className="service-form" onSubmit={submitService}>
@@ -122,6 +160,15 @@ function ServicesView({ onServiceSave, onServiceToggle, services }) {
               <option>Labial</option>
               <option>Bem-estar</option>
             </select>
+          </label>
+          <label>
+            Profissional principal
+            <input
+              required
+              value={serviceForm.professional}
+              onChange={(event) => updateForm('professional', event.target.value)}
+              placeholder="Ex: Dra. Mariana"
+            />
           </label>
           <div className="form-row">
             <label>
