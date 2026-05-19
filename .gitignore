@@ -6,3 +6,5 @@ Thumbs.db
 vite-admin.*.log
 .env
 .env.local
+lumiereclinic/target/
+lumiereclinic/.m2/
