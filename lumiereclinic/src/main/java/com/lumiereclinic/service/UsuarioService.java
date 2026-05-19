@@ -18,6 +18,8 @@ import java.util.Optional;
 @Service
 public class UsuarioService implements UserDetailsService {
 
+    public static final String DEFAULT_EMPRESA_ID = "lumiere-clinic";
+
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
@@ -32,6 +34,9 @@ public class UsuarioService implements UserDetailsService {
         }
 
         usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+        if (usuario.getEmpresaId() == null || usuario.getEmpresaId().isBlank()) {
+            usuario.setEmpresaId(DEFAULT_EMPRESA_ID);
+        }
 
         return usuarioRepository.save(usuario);
     }
@@ -60,10 +65,14 @@ public class UsuarioService implements UserDetailsService {
         );
     }
 
+    public Usuario buscarPorEmail(String email) {
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario nao encontrado"));
+    }
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario nao encontrado"));
+        Usuario usuario = buscarPorEmail(username);
 
         return User.withUsername(usuario.getEmail())
                 .password(usuario.getSenha())

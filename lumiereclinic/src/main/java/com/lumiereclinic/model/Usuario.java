@@ -27,4 +27,7 @@ public class Usuario {
 
     @Column(nullable = false)
     private String telefone;
+
+    @Column(name = "empresa_id", nullable = false)
+    private String empresaId;
 }

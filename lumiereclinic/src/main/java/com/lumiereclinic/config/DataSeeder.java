@@ -4,6 +4,7 @@ import com.lumiereclinic.model.Servico;
 import com.lumiereclinic.model.Usuario;
 import com.lumiereclinic.repository.ServicoRepository;
 import com.lumiereclinic.repository.UsuarioRepository;
+import com.lumiereclinic.service.UsuarioService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,7 @@ public class DataSeeder {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
     private static final String DEFAULT_ADMIN_EMAIL = "fluxon@gmail.com";
+    private static final String DEFAULT_EMPRESA_ID = UsuarioService.DEFAULT_EMPRESA_ID;
 
     @Bean
     CommandLineRunner seedInitialData(
@@ -43,6 +45,7 @@ public class DataSeeder {
         usuario.setEmail(DEFAULT_ADMIN_EMAIL);
         usuario.setSenha(passwordEncoder.encode("123"));
         usuario.setTelefone("00000000000");
+        usuario.setEmpresaId(DEFAULT_EMPRESA_ID);
 
         usuarioRepository.save(usuario);
     }
@@ -76,8 +79,10 @@ public class DataSeeder {
             servico.setCategoria(seed.categoria());
             servico.setPreco(seed.preco());
             servico.setDuracaoMinutos(seed.duracaoMinutos());
+            servico.setProfissionalPrincipal("Equipe Lumiere");
             servico.setAtivo(true);
             servico.setPublicado(true);
+            servico.setEmpresaId(DEFAULT_EMPRESA_ID);
 
             servicoRepository.save(servico);
         });
