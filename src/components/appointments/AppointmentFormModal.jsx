@@ -1,8 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { emptyAppointmentForm } from '../../data/adminData';
 
 function AppointmentFormModal({ onClose, onSubmit, open, services }) {
   const [form, setForm] = useState(emptyAppointmentForm);
+  const [saving, setSaving] = useState(false);
+  const activeServices = services.filter((service) => service.active);
+
+  useEffect(() => {
+    if (!open || form.serviceId || activeServices.length === 0) {
+      return;
+    }
+
+    setForm((current) => ({ ...current, serviceId: String(activeServices[0].id) }));
+  }, [activeServices, form.serviceId, open]);
 
   if (!open) {
     return null;
@@ -12,11 +22,17 @@ function AppointmentFormModal({ onClose, onSubmit, open, services }) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function submitForm(event) {
+  async function submitForm(event) {
     event.preventDefault();
-    onSubmit(form);
-    setForm(emptyAppointmentForm);
-    onClose();
+
+    try {
+      setSaving(true);
+      await onSubmit(form);
+      setForm(emptyAppointmentForm);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -46,10 +62,14 @@ function AppointmentFormModal({ onClose, onSubmit, open, services }) {
             </label>
           </div>
           <label>
-            Serviço
-            <select value={form.service} onChange={(event) => updateForm('service', event.target.value)}>
-              {services.filter((service) => service.active).map((service) => (
-                <option key={service.id}>{service.name}</option>
+            Servico
+            <select
+              required
+              value={form.serviceId}
+              onChange={(event) => updateForm('serviceId', event.target.value)}
+            >
+              {activeServices.map((service) => (
+                <option key={service.id} value={service.id}>{service.name}</option>
               ))}
             </select>
           </label>
@@ -59,15 +79,17 @@ function AppointmentFormModal({ onClose, onSubmit, open, services }) {
               <input type="date" value={form.date} onChange={(event) => updateForm('date', event.target.value)} />
             </label>
             <label>
-              Horário
+              Horario
               <input type="time" value={form.time} onChange={(event) => updateForm('time', event.target.value)} />
             </label>
           </div>
           <label>
-            Observações internas
+            Observacoes internas
             <textarea value={form.notes} onChange={(event) => updateForm('notes', event.target.value)} rows="4" />
           </label>
-          <button className="primary-action" type="submit">Salvar agendamento</button>
+          <button className="primary-action" disabled={saving || activeServices.length === 0} type="submit">
+            {saving ? 'Salvando...' : 'Salvar agendamento'}
+          </button>
         </form>
       </section>
     </div>

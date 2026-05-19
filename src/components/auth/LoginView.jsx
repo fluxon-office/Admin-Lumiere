@@ -2,8 +2,15 @@ import { useState } from 'react';
 import clinicImage from '../../assets/mulherLumiere.jpg';
 import logoImage from '../../assets/logolumiere.jpeg';
 
-function LoginView({ onLogin }) {
+function LoginView({ error, loading, onBootstrap, onLogin }) {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('admin@lumiereclinic.com');
+  const [senha, setSenha] = useState('');
+
+  function submitLogin(event) {
+    event.preventDefault();
+    onLogin({ email, senha });
+  }
 
   return (
     <main className="login-page">
@@ -47,18 +54,26 @@ function LoginView({ onLogin }) {
             <p>Use suas credenciais internas para continuar.</p>
           </div>
 
-          <form className="login-form" onSubmit={onLogin}>
+          <form className="login-form" onSubmit={submitLogin}>
             <label>
               E-mail corporativo
-              <input type="email" defaultValue="admin@lumiereclinic.com" autoComplete="email" />
+              <input
+                required
+                type="email"
+                value={email}
+                autoComplete="email"
+                onChange={(event) => setEmail(event.target.value)}
+              />
             </label>
             <label>
               Senha
               <span className="password-field">
                 <input
+                  required
                   type={showPassword ? 'text' : 'password'}
-                  defaultValue="lumiere123"
+                  value={senha}
                   autoComplete="current-password"
+                  onChange={(event) => setSenha(event.target.value)}
                 />
                 <button type="button" onClick={() => setShowPassword((current) => !current)}>
                   {showPassword ? 'Ocultar' : 'Ver'}
@@ -74,7 +89,23 @@ function LoginView({ onLogin }) {
               <a href="#recuperar">Recuperar acesso</a>
             </div>
 
-            <button type="submit">Acessar agenda</button>
+            {error ? (
+              <div className="login-error" role="alert">
+                {error}
+              </div>
+            ) : null}
+
+            <button disabled={loading} type="submit">
+              {loading ? 'Validando...' : 'Acessar agenda'}
+            </button>
+            <button
+              className="secondary-login-action"
+              disabled={loading || !email || !senha}
+              type="button"
+              onClick={() => onBootstrap({ email, senha })}
+            >
+              Criar primeiro acesso
+            </button>
           </form>
         </aside>
       </section>

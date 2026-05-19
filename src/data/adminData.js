@@ -170,8 +170,8 @@ const emptyAppointmentForm = {
   client: '',
   phone: '',
   email: '',
-  service: 'Botox',
-  date: '2026-05-18',
+  serviceId: '',
+  date: new Date().toISOString().slice(0, 10),
   time: '09:00',
   notes: '',
 };

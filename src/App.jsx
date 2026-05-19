@@ -9,36 +9,69 @@ import AgendaView from './components/sections/AgendaView';
 import ClientsView, { ClientDetail } from './components/sections/ClientsView';
 import RequestsView from './components/sections/RequestsView';
 import ServicesView from './components/sections/ServicesView';
-import { initialAppointments, navItems, sectionTitles, statusLabels } from './data/adminData';
+import { navItems, sectionTitles, statusLabels } from './data/adminData';
 import {
-  loadStoredAppointments,
-  loadStoredServices,
-  storeAppointments,
-  storeServices,
-} from './utils/storageUtils';
+  bootstrapFirstUser,
+  createAppointment as createAppointmentRequest,
+  fetchAppointments,
+  fetchServices,
+  loginAdmin,
+  saveService as saveServiceRequest,
+  updateAppointmentStatus,
+} from './utils/api';
 
-function AdminView() {
-  const [appointments, setAppointments] = useState(loadStoredAppointments);
-  const [services, setServices] = useState(loadStoredServices);
+function AdminView({ auth }) {
+  const [appointments, setAppointments] = useState([]);
+  const [services, setServices] = useState([]);
   const [toast, setToast] = useState('');
+  const [loadingData, setLoadingData] = useState(true);
   const [activeSection, setActiveSection] = useState('agenda');
   const [activeFilter, setActiveFilter] = useState('todos');
   const [agendaRange, setAgendaRange] = useState('dia');
-  const [selectedDate, setSelectedDate] = useState('2026-05-18');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [search, setSearch] = useState('');
   const [globalSearch, setGlobalSearch] = useState('');
   const [detailOpen, setDetailOpen] = useState(false);
   const [clientDetail, setClientDetail] = useState(null);
   const [appointmentModalOpen, setAppointmentModalOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState(initialAppointments[0].id);
+  const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
-    storeServices(services);
-  }, [services]);
+    let ignore = false;
 
-  useEffect(() => {
-    storeAppointments(appointments);
-  }, [appointments]);
+    async function loadDashboardData() {
+      setLoadingData(true);
+
+      try {
+        const [appointmentsPayload, servicesPayload] = await Promise.all([
+          fetchAppointments(auth),
+          fetchServices(auth),
+        ]);
+
+        if (ignore) {
+          return;
+        }
+
+        setAppointments(appointmentsPayload);
+        setServices(servicesPayload);
+        setSelectedId(appointmentsPayload[0]?.id ?? null);
+      } catch (error) {
+        if (!ignore) {
+          setToast(error.message || 'Nao foi possivel carregar os dados do painel.');
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingData(false);
+        }
+      }
+    }
+
+    loadDashboardData();
+
+    return () => {
+      ignore = true;
+    };
+  }, [auth]);
 
   useEffect(() => {
     if (!toast) {
@@ -66,7 +99,7 @@ function AdminView() {
     reschedule: appointments.filter((item) => item.status === 'remarcar').length,
   }), [appointments]);
 
-  function updateStatus(id, status) {
+  async function updateStatus(id, status) {
     if (status === 'cancelado') {
       const appointment = appointments.find((item) => item.id === id);
       const confirmed = window.confirm(`Cancelar o agendamento de ${appointment?.client ?? 'cliente selecionada'}?`);
@@ -76,21 +109,16 @@ function AdminView() {
       }
     }
 
-    setAppointments((current) => current.map((appointment) => {
-      if (appointment.id !== id) {
-        return appointment;
-      }
+    try {
+      const updatedAppointment = await updateAppointmentStatus(auth, id, status);
 
-      return {
-        ...appointment,
-        status,
-        history: [
-          ...appointment.history,
-          `${statusLabels[status]} pela recepção em 17/05 às 14:30`,
-        ],
-      };
-    }));
-    setToast(`Agendamento ${statusLabels[status].toLowerCase()} com sucesso.`);
+      setAppointments((current) => current.map((appointment) => (
+        appointment.id === id ? updatedAppointment : appointment
+      )));
+      setToast(`Agendamento ${statusLabels[status].toLowerCase()} com sucesso.`);
+    } catch (error) {
+      setToast(error.message || 'Nao foi possivel atualizar o agendamento.');
+    }
   }
 
   function selectAppointment(id) {
@@ -98,54 +126,52 @@ function AdminView() {
     setDetailOpen(true);
   }
 
-  function createAppointment(form) {
-    const nextId = Math.max(...appointments.map((appointment) => appointment.id), 0) + 1;
-    const appointment = {
-      id: nextId,
-      client: form.client,
-      phone: form.phone,
-      email: form.email,
-      service: form.service,
-      date: form.date,
-      time: form.time,
-      status: 'pendente',
-      source: 'Recepção',
-      notes: form.notes || 'Agendamento criado manualmente pela recepção.',
-      history: ['Criado pela recepção agora'],
-    };
+  async function createAppointment(form) {
+    try {
+      const appointment = await createAppointmentRequest(auth, form);
 
-    setAppointments((current) => [appointment, ...current]);
-    setSelectedId(nextId);
-    setSelectedDate(form.date);
-    setActiveSection('agenda');
-    setDetailOpen(true);
-    setToast('Agendamento criado com sucesso.');
+      setAppointments((current) => [appointment, ...current]);
+      setSelectedId(appointment.id);
+      setSelectedDate(appointment.date);
+      setActiveSection('agenda');
+      setDetailOpen(true);
+      setToast('Agendamento criado com sucesso.');
+    } catch (error) {
+      setToast(error.message || 'Nao foi possivel criar o agendamento.');
+      throw error;
+    }
   }
 
-  function saveService(service) {
-    if (service.id) {
-      setServices((current) => current.map((item) => (
-        item.id === service.id ? { ...item, ...service } : item
-      )));
-      setToast('Serviço atualizado com sucesso.');
+  async function saveService(service) {
+    try {
+      const savedService = await saveServiceRequest(auth, service);
+
+      setServices((current) => {
+        if (service.id) {
+          return current.map((item) => (item.id === service.id ? savedService : item));
+        }
+
+        return [savedService, ...current];
+      });
+      setToast(service.id ? 'Servico atualizado com sucesso.' : 'Servico cadastrado com sucesso.');
+    } catch (error) {
+      setToast(error.message || 'Nao foi possivel salvar o servico.');
+      throw error;
+    }
+  }
+
+  async function toggleService(id, field) {
+    const service = services.find((item) => item.id === id);
+
+    if (!service) {
       return;
     }
 
-    setServices((current) => [
-      {
-        ...service,
-        id: Math.max(...current.map((item) => item.id), 0) + 1,
-      },
-      ...current,
-    ]);
-    setToast('Serviço cadastrado com sucesso.');
-  }
-
-  function toggleService(id, field) {
-    setServices((current) => current.map((service) => (
-      service.id === id ? { ...service, [field]: !service[field] } : service
-    )));
-    setToast(field === 'published' ? 'Visibilidade no site atualizada.' : 'Status do serviço atualizado.');
+    await saveService({
+      ...service,
+      [field]: !service[field],
+    });
+    setToast(field === 'published' ? 'Visibilidade no site atualizada.' : 'Status do servico atualizado.');
   }
 
   return (
@@ -158,7 +184,7 @@ function AdminView() {
             <span>Admin</span>
           </div>
         </div>
-        <nav aria-label="Navegação principal">
+        <nav aria-label="Navegacao principal">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -181,27 +207,33 @@ function AdminView() {
           <div className="topbar-actions">
             <input
               aria-label="Busca global"
-              placeholder="Buscar cliente, telefone ou serviço"
+              placeholder="Buscar cliente, telefone ou servico"
               value={globalSearch}
               onChange={(event) => setGlobalSearch(event.target.value)}
             />
             <button type="button" onClick={() => setAppointmentModalOpen(true)}>Novo agendamento</button>
-            <button type="button" onClick={() => setActiveSection('solicitacoes')}>Pendências</button>
+            <button type="button" onClick={() => setActiveSection('solicitacoes')}>Pendencias</button>
           </div>
           <div className="operator">
-            <span>Recepção</span>
-            <strong>Beatriz</strong>
+            <span>{auth.nome ? 'Operador' : 'Recepcao'}</span>
+            <strong>{auth.nome || 'Lumiere'}</strong>
           </div>
         </header>
 
         <section className="metric-grid" aria-label="Resumo da agenda">
-          <MetricCard marker="+" label="Total" value={metrics.total} detail="registros na operação" tone="metric-neutral" />
+          <MetricCard marker="+" label="Total" value={metrics.total} detail="registros na operacao" tone="metric-neutral" />
           <MetricCard marker="!" label="Pendentes" value={metrics.pending} detail="aguardando contato" tone="metric-warning" />
           <MetricCard marker="OK" label="Confirmados" value={metrics.confirmed} detail="agenda validada" tone="metric-success" />
-          <MetricCard marker="R" label="Remarcação" value={metrics.reschedule} detail="precisam de novo horário" tone="metric-info" />
+          <MetricCard marker="R" label="Remarcacao" value={metrics.reschedule} detail="precisam de novo horario" tone="metric-info" />
         </section>
 
-        {activeSection === 'agenda' && (
+        {loadingData ? (
+          <section className="calendar-empty">
+            Carregando agenda e servicos do backend...
+          </section>
+        ) : null}
+
+        {!loadingData && activeSection === 'agenda' && (
           <AgendaView
             activeFilter={activeFilter}
             agendaRange={agendaRange}
@@ -217,9 +249,9 @@ function AdminView() {
             selectedAppointment={selectedAppointment}
           />
         )}
-        {activeSection === 'solicitacoes' && <RequestsView appointments={appointments} onStatusChange={updateStatus} />}
-        {activeSection === 'clientes' && <ClientsView appointments={appointments} onClientSelect={setClientDetail} />}
-        {activeSection === 'servicos' && (
+        {!loadingData && activeSection === 'solicitacoes' && <RequestsView appointments={appointments} onStatusChange={updateStatus} />}
+        {!loadingData && activeSection === 'clientes' && <ClientsView appointments={appointments} onClientSelect={setClientDetail} />}
+        {!loadingData && activeSection === 'servicos' && (
           <ServicesView
             services={services}
             onServiceSave={saveService}
@@ -228,7 +260,7 @@ function AdminView() {
         )}
       </main>
 
-      <nav className="mobile-bottom-nav" aria-label="Navegação mobile">
+      <nav className="mobile-bottom-nav" aria-label="Navegacao mobile">
         {navItems.map((item) => (
           <button
             key={item.id}
@@ -269,16 +301,59 @@ function AdminView() {
 }
 
 function App() {
-  const [authenticated, setAuthenticated] = useState(false);
+  const [auth, setAuth] = useState(null);
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
 
-  if (!authenticated) {
-    return <LoginView onLogin={(event) => {
-      event.preventDefault();
-      setAuthenticated(true);
-    }} />;
+  async function handleLogin({ email, senha }) {
+    setLoginError('');
+    setLoginLoading(true);
+
+    try {
+      const response = await loginAdmin(email, senha);
+      setAuth({
+        email,
+        nome: response?.nome || email,
+        senha,
+      });
+    } catch (error) {
+      setLoginError(error.message || 'Nao foi possivel entrar no painel.');
+    } finally {
+      setLoginLoading(false);
+    }
   }
 
-  return <AdminView />;
+  async function handleBootstrap({ email, senha }) {
+    setLoginError('');
+    setLoginLoading(true);
+
+    try {
+      await bootstrapFirstUser(email, senha);
+      const response = await loginAdmin(email, senha);
+      setAuth({
+        email,
+        nome: response?.nome || email,
+        senha,
+      });
+    } catch (error) {
+      setLoginError(error.message || 'Nao foi possivel criar o primeiro acesso.');
+    } finally {
+      setLoginLoading(false);
+    }
+  }
+
+  if (!auth) {
+    return (
+      <LoginView
+        error={loginError}
+        loading={loginLoading}
+        onBootstrap={handleBootstrap}
+        onLogin={handleLogin}
+      />
+    );
+  }
+
+  return <AdminView auth={auth} />;
 }
 
 export default App;

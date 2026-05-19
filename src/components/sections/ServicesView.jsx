@@ -4,6 +4,7 @@ import { emptyServiceForm } from '../../data/adminData';
 function ServicesView({ onServiceSave, onServiceToggle, services }) {
   const [editingService, setEditingService] = useState(null);
   const [serviceForm, setServiceForm] = useState(emptyServiceForm);
+  const [saving, setSaving] = useState(false);
   const serviceFormRef = useRef(null);
 
   function scrollToServiceForm() {
@@ -39,15 +40,21 @@ function ServicesView({ onServiceSave, onServiceToggle, services }) {
     }));
   }
 
-  function submitService(event) {
+  async function submitService(event) {
     event.preventDefault();
-    onServiceSave({
-      id: editingService,
-      ...serviceForm,
-      name: serviceForm.name.trim(),
-      description: serviceForm.description.trim(),
-    });
-    resetForm();
+
+    try {
+      setSaving(true);
+      await onServiceSave({
+        id: editingService,
+        ...serviceForm,
+        name: serviceForm.name.trim(),
+        description: serviceForm.description.trim(),
+      });
+      resetForm();
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -55,10 +62,10 @@ function ServicesView({ onServiceSave, onServiceToggle, services }) {
       <div className="panel-stack">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Catálogo</p>
-            <h2>Serviços da clínica</h2>
+            <p className="eyebrow">Catalogo</p>
+            <h2>Servicos da clinica</h2>
           </div>
-          <button className="primary-action" type="button" onClick={resetForm}>Novo serviço</button>
+          <button className="primary-action" type="button" onClick={resetForm}>Novo servico</button>
         </div>
 
         <div className="table-panel">
@@ -91,15 +98,15 @@ function ServicesView({ onServiceSave, onServiceToggle, services }) {
       </div>
 
       <aside className="service-form-panel" ref={serviceFormRef}>
-        <p className="eyebrow">{editingService ? 'Editar serviço' : 'Novo serviço'}</p>
+        <p className="eyebrow">{editingService ? 'Editar servico' : 'Novo servico'}</p>
         <h2>{editingService ? 'Atualizar procedimento' : 'Cadastrar procedimento'}</h2>
         <p className="form-helper">
-          Serviços marcados para publicação ficam prontos para aparecer no site público quando a integração/API estiver conectada.
+          Servicos marcados para publicacao aparecem no site publico quando estiverem ativos.
         </p>
 
         <form className="service-form" onSubmit={submitService}>
           <label>
-            Nome do serviço
+            Nome do servico
             <input
               required
               value={serviceForm.name}
@@ -118,16 +125,16 @@ function ServicesView({ onServiceSave, onServiceToggle, services }) {
           </label>
           <div className="form-row">
             <label>
-              Duração
+              Duracao
               <input value={serviceForm.duration} onChange={(event) => updateForm('duration', event.target.value)} />
             </label>
             <label>
-              Preço
+              Preco
               <input value={serviceForm.price} onChange={(event) => updateForm('price', event.target.value)} />
             </label>
           </div>
           <label>
-            Descrição para o site
+            Descricao para o site
             <textarea
               required
               value={serviceForm.description}
@@ -142,7 +149,7 @@ function ServicesView({ onServiceSave, onServiceToggle, services }) {
                 type="checkbox"
                 onChange={(event) => updateForm('active', event.target.checked)}
               />
-              Serviço ativo
+              Servico ativo
             </label>
             <label>
               <input
@@ -153,7 +160,9 @@ function ServicesView({ onServiceSave, onServiceToggle, services }) {
               Publicar no site
             </label>
           </div>
-          <button className="primary-action" type="submit">{editingService ? 'Salvar alterações' : 'Cadastrar serviço'}</button>
+          <button className="primary-action" disabled={saving} type="submit">
+            {saving ? 'Salvando...' : editingService ? 'Salvar alteracoes' : 'Cadastrar servico'}
+          </button>
         </form>
       </aside>
     </section>
