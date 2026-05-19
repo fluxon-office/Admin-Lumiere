@@ -13,6 +13,8 @@ public interface ServicoRepository extends JpaRepository<Servico, Long> {
 
     Optional<Servico> findByNomeIgnoreCase(String nome);
 
+    List<Servico> findAllByNomeIgnoreCase(String nome);
+
     @Query("select servico from Servico servico where servico.ativo = true and (servico.publicado = true or servico.publicado is null)")
     List<Servico> findServicosPublicos();
 

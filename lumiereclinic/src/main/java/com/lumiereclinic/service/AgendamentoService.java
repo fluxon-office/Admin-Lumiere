@@ -2,6 +2,7 @@ package com.lumiereclinic.service;
 
 import com.lumiereclinic.dto.AgendamentoRequest;
 import com.lumiereclinic.dto.DisponibilidadeResponse;
+import com.lumiereclinic.dto.RemarcacaoRequest;
 import com.lumiereclinic.enums.StatusAgendamento;
 import com.lumiereclinic.exception.ResourceBadRequestException;
 import com.lumiereclinic.exception.ResourceNotFoundException;
@@ -56,6 +57,10 @@ public class AgendamentoService {
                     return clienteRepository.save(novo);
                 });
 
+        cliente.setNome(request.getNome());
+        cliente.setTelefone(request.getTelefone());
+        clienteRepository.save(cliente);
+
         Agendamento agendamento = new Agendamento();
         agendamento.setCliente(cliente);
         agendamento.setServico(servico);
@@ -69,8 +74,21 @@ public class AgendamentoService {
         }
     }
 
-    public List<Agendamento> listarAgendamentos() {
-        return agendamentoRepository.findAllByOrderByDataHoraAsc();
+    public List<Agendamento> listarAgendamentos(String status, LocalDate data, String busca) {
+        StatusAgendamento statusFiltro = null;
+
+        if (status != null && !status.isBlank()) {
+            try {
+                statusFiltro = StatusAgendamento.valueOf(status.trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException ex) {
+                throw new ResourceBadRequestException("Status de agendamento invalido");
+            }
+        }
+
+        String termo = busca == null || busca.isBlank() ? null : busca.trim();
+        LocalDateTime inicio = data != null ? data.atStartOfDay() : null;
+        LocalDateTime fim = data != null ? data.atTime(23, 59, 59) : null;
+        return agendamentoRepository.buscarComFiltros(statusFiltro, inicio, fim, termo);
     }
 
     @Transactional
@@ -86,11 +104,27 @@ public class AgendamentoService {
         return agendamentoRepository.save(agendamento);
     }
 
-    public Agendamento remarcarAgendamento(Long id) {
+    @Transactional
+    public Agendamento remarcarAgendamento(Long id, RemarcacaoRequest request) {
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento nao encontrado"));
 
+        if (request.getDataHora().isBefore(LocalDateTime.now())) {
+            throw new ResourceBadRequestException("Nao e possivel remarcar para uma data passada");
+        }
+
+        if (agendamentoRepository.existsByDataHoraAndServicoId(request.getDataHora(), agendamento.getServico().getId())
+                && !request.getDataHora().equals(agendamento.getDataHora())) {
+            throw new ResourceBadRequestException("Horario ja ocupado para o servico selecionado");
+        }
+
+        agendamento.setDataHora(request.getDataHora());
         agendamento.setStatus(StatusAgendamento.REMARCAR);
+
+        if (request.getObservacao() != null && !request.getObservacao().isBlank()) {
+            agendamento.setObservacao(request.getObservacao().trim());
+        }
+
         return agendamentoRepository.save(agendamento);
     }
 

@@ -2,6 +2,7 @@ package com.lumiereclinic.controller;
 
 import com.lumiereclinic.dto.AgendamentoRequest;
 import com.lumiereclinic.dto.DisponibilidadeResponse;
+import com.lumiereclinic.dto.RemarcacaoRequest;
 import com.lumiereclinic.model.Agendamento;
 import com.lumiereclinic.service.AgendamentoService;
 import jakarta.validation.Valid;
@@ -38,8 +39,13 @@ public class AgendamentoController {
     }
 
     @GetMapping
-    public List<Agendamento> listarAgendamentos() {
-        return agendamentoService.listarAgendamentos();
+    public List<Agendamento> listarAgendamentos(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String data,
+            @RequestParam(required = false) String busca
+    ) {
+        LocalDate dataConvertida = data != null && !data.isBlank() ? LocalDate.parse(data) : null;
+        return agendamentoService.listarAgendamentos(status, dataConvertida, busca);
     }
 
     @PutMapping("/{id}/confirmar")
@@ -53,8 +59,8 @@ public class AgendamentoController {
     }
 
     @PutMapping("/{id}/remarcar")
-    public Agendamento remarcar(@PathVariable Long id) {
-        return agendamentoService.remarcarAgendamento(id);
+    public Agendamento remarcar(@PathVariable Long id, @Valid @RequestBody RemarcacaoRequest request) {
+        return agendamentoService.remarcarAgendamento(id, request);
     }
 
     @GetMapping("/data")

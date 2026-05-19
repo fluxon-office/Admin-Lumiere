@@ -8,11 +8,16 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 @Configuration
 public class DataSeeder {
+
+    private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
+    private static final String DEFAULT_ADMIN_EMAIL = "fluxon@gmail.com";
 
     @Bean
     CommandLineRunner seedInitialData(
@@ -27,11 +32,15 @@ public class DataSeeder {
     }
 
     private void seedAdminUser(UsuarioRepository usuarioRepository, BCryptPasswordEncoder passwordEncoder) {
-        Usuario usuario = usuarioRepository.findByEmail("johnkevin.devs@gmail.com")
-                .orElseGet(Usuario::new);
+        List<Usuario> usuarios = usuarioRepository.findAllByEmail(DEFAULT_ADMIN_EMAIL);
+        Usuario usuario = usuarios.stream().findFirst().orElseGet(Usuario::new);
 
-        usuario.setNome("John Kevin");
-        usuario.setEmail("johnkevin.devs@gmail.com");
+        if (usuarios.size() > 1) {
+            log.warn("Foram encontrados {} usuarios com o e-mail {}. O seed vai reutilizar apenas o primeiro registro.", usuarios.size(), DEFAULT_ADMIN_EMAIL);
+        }
+
+        usuario.setNome("Fluxon Admin");
+        usuario.setEmail(DEFAULT_ADMIN_EMAIL);
         usuario.setSenha(passwordEncoder.encode("123"));
         usuario.setTelefone("00000000000");
 
@@ -55,8 +64,12 @@ public class DataSeeder {
         );
 
         services.forEach(seed -> {
-            Servico servico = servicoRepository.findByNomeIgnoreCase(seed.nome())
-                    .orElseGet(Servico::new);
+            List<Servico> servicosExistentes = servicoRepository.findAllByNomeIgnoreCase(seed.nome());
+            Servico servico = servicosExistentes.stream().findFirst().orElseGet(Servico::new);
+
+            if (servicosExistentes.size() > 1) {
+                log.warn("Foram encontrados {} servicos com o nome '{}'. O seed vai atualizar apenas o primeiro registro.", servicosExistentes.size(), seed.nome());
+            }
 
             servico.setNome(seed.nome());
             servico.setDescricao(seed.descricao());
