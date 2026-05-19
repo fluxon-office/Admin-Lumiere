@@ -1,16 +1,7 @@
 import { createWhatsAppLink, normalizePhone } from '../../utils/contactUtils';
 import { formatDate } from '../../utils/dateUtils';
 
-function ClientsView({ appointments, onClientSelect }) {
-  const clients = appointments.map((appointment) => ({
-    name: appointment.client,
-    phone: appointment.phone,
-    email: appointment.email,
-    lastService: appointment.service,
-    nextVisit: appointment.status === 'cancelado' ? 'Sem retorno marcado' : `${formatDate(appointment.date)} às ${appointment.time}`,
-    status: appointment.status,
-  }));
-
+function ClientsView({ clients, onClientSelect, search, onSearchChange }) {
   return (
     <section className="panel-stack" id="clientes">
       <div className="section-heading">
@@ -18,12 +9,12 @@ function ClientsView({ appointments, onClientSelect }) {
           <p className="eyebrow">Relacionamento</p>
           <h2>Clientes cadastrados</h2>
         </div>
-        <input aria-label="Buscar cliente" placeholder="Buscar cliente" />
+        <input aria-label="Buscar cliente" placeholder="Buscar cliente" value={search} onChange={(event) => onSearchChange(event.target.value)} />
       </div>
 
       <div className="client-grid">
         {clients.map((client) => (
-          <button className="client-card" key={client.email} type="button" onClick={() => onClientSelect(client)}>
+          <button className="client-card" key={client.id || client.email} type="button" onClick={() => onClientSelect(client)}>
             <div className="client-avatar">{client.name.slice(0, 1)}</div>
             <div>
               <h3>{client.name}</h3>
@@ -32,7 +23,11 @@ function ClientsView({ appointments, onClientSelect }) {
             </div>
             <div className="client-footer">
               <span>{client.lastService}</span>
-              <strong>{client.nextVisit}</strong>
+              <strong>
+                {client.nextVisit === 'Sem retorno marcado'
+                  ? client.nextVisit
+                  : `${formatDate(client.nextVisit.slice(0, 10))} as ${client.nextVisit.slice(11, 16)}`}
+              </strong>
             </div>
           </button>
         ))}
@@ -72,9 +67,9 @@ function ClientDetail({ client, appointments, onClose }) {
         <a href={`tel:${normalizePhone(client.phone)}`}>Ligar</a>
       </div>
       <section className="history-list">
-        <h3>Histórico de atendimentos</h3>
+        <h3>Historico de atendimentos</h3>
         {clientAppointments.map((appointment) => (
-          <p key={appointment.id}>{appointment.service} em {formatDate(appointment.date)} às {appointment.time}</p>
+          <p key={appointment.id}>{appointment.service} em {formatDate(appointment.date)} as {appointment.time}</p>
         ))}
       </section>
     </div>

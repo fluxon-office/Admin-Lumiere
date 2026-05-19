@@ -3,6 +3,7 @@ import logoImage from './assets/logolumiere.jpeg';
 import LoginView from './components/auth/LoginView';
 import AppointmentDetail from './components/appointments/AppointmentDetail';
 import AppointmentFormModal from './components/appointments/AppointmentFormModal';
+import RescheduleModal from './components/appointments/RescheduleModal';
 import MetricCard from './components/common/MetricCard';
 import SideDrawer from './components/common/SideDrawer';
 import AgendaView from './components/sections/AgendaView';
@@ -14,6 +15,7 @@ import {
   bootstrapFirstUser,
   createAppointment as createAppointmentRequest,
   fetchAppointments,
+  fetchClients,
   fetchServices,
   loginAdmin,
   saveService as saveServiceRequest,
@@ -23,6 +25,7 @@ import {
 function AdminView({ auth }) {
   const [appointments, setAppointments] = useState([]);
   const [services, setServices] = useState([]);
+  const [clients, setClients] = useState([]);
   const [toast, setToast] = useState('');
   const [loadingData, setLoadingData] = useState(true);
   const [activeSection, setActiveSection] = useState('agenda');
@@ -31,33 +34,69 @@ function AdminView({ auth }) {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [search, setSearch] = useState('');
   const [globalSearch, setGlobalSearch] = useState('');
+  const [clientSearch, setClientSearch] = useState('');
   const [detailOpen, setDetailOpen] = useState(false);
   const [clientDetail, setClientDetail] = useState(null);
   const [appointmentModalOpen, setAppointmentModalOpen] = useState(false);
+  const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
+  const [rescheduleTarget, setRescheduleTarget] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
+
+  const appointmentSearch = useMemo(
+    () => [globalSearch.trim(), search.trim()].filter(Boolean).join(' ').trim(),
+    [globalSearch, search],
+  );
 
   useEffect(() => {
     let ignore = false;
 
-    async function loadDashboardData() {
-      setLoadingData(true);
-
+    async function loadServices() {
       try {
-        const [appointmentsPayload, servicesPayload] = await Promise.all([
-          fetchAppointments(auth),
-          fetchServices(auth),
-        ]);
+        const servicesPayload = await fetchServices(auth);
+
+        if (!ignore) {
+          setServices(servicesPayload);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setToast(error.message || 'Nao foi possivel carregar os servicos.');
+        }
+      }
+    }
+
+    loadServices();
+
+    return () => {
+      ignore = true;
+    };
+  }, [auth]);
+
+  useEffect(() => {
+    let ignore = false;
+    setLoadingData(true);
+
+    async function loadAppointments() {
+      try {
+        const appointmentsPayload = await fetchAppointments(auth, {
+          busca: appointmentSearch,
+          status: activeFilter,
+        });
 
         if (ignore) {
           return;
         }
 
         setAppointments(appointmentsPayload);
-        setServices(servicesPayload);
-        setSelectedId(appointmentsPayload[0]?.id ?? null);
+        setSelectedId((current) => {
+          if (appointmentsPayload.some((appointment) => appointment.id === current)) {
+            return current;
+          }
+
+          return appointmentsPayload[0]?.id ?? null;
+        });
       } catch (error) {
         if (!ignore) {
-          setToast(error.message || 'Nao foi possivel carregar os dados do painel.');
+          setToast(error.message || 'Nao foi possivel carregar os agendamentos.');
         }
       } finally {
         if (!ignore) {
@@ -66,12 +105,36 @@ function AdminView({ auth }) {
       }
     }
 
-    loadDashboardData();
+    loadAppointments();
 
     return () => {
       ignore = true;
     };
-  }, [auth]);
+  }, [activeFilter, appointmentSearch, auth]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadClients() {
+      try {
+        const clientsPayload = await fetchClients(auth, [globalSearch.trim(), clientSearch.trim()].filter(Boolean).join(' '));
+
+        if (!ignore) {
+          setClients(clientsPayload);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setToast(error.message || 'Nao foi possivel carregar os clientes.');
+        }
+      }
+    }
+
+    loadClients();
+
+    return () => {
+      ignore = true;
+    };
+  }, [auth, clientSearch, globalSearch]);
 
   useEffect(() => {
     if (!toast) {
@@ -83,12 +146,12 @@ function AdminView({ auth }) {
   }, [toast]);
 
   const filteredAppointments = useMemo(() => appointments.filter((appointment) => {
-    const matchesFilter = activeFilter === 'todos' || appointment.status === activeFilter;
-    const searchTarget = `${appointment.client} ${appointment.service} ${appointment.phone} ${appointment.email}`.toLowerCase();
-    const localSearch = searchTarget.includes(search.toLowerCase());
-    const globalMatch = searchTarget.includes(globalSearch.toLowerCase());
-    return matchesFilter && localSearch && globalMatch;
-  }), [activeFilter, appointments, globalSearch, search]);
+    if (agendaRange === 'dia') {
+      return appointment.date === selectedDate;
+    }
+
+    return true;
+  }), [agendaRange, appointments, selectedDate]);
 
   const selectedAppointment = appointments.find((appointment) => appointment.id === selectedId) ?? filteredAppointments[0];
 
@@ -99,7 +162,18 @@ function AdminView({ auth }) {
     reschedule: appointments.filter((item) => item.status === 'remarcar').length,
   }), [appointments]);
 
-  async function updateStatus(id, status) {
+  function syncUpdatedAppointment(updatedAppointment) {
+    setAppointments((current) => current.map((appointment) => (
+      appointment.id === updatedAppointment.id ? updatedAppointment : appointment
+    )));
+  }
+
+  async function refreshClients() {
+    const clientsPayload = await fetchClients(auth, [globalSearch.trim(), clientSearch.trim()].filter(Boolean).join(' '));
+    setClients(clientsPayload);
+  }
+
+  async function updateStatus(id, status, payload) {
     if (status === 'cancelado') {
       const appointment = appointments.find((item) => item.id === id);
       const confirmed = window.confirm(`Cancelar o agendamento de ${appointment?.client ?? 'cliente selecionada'}?`);
@@ -109,15 +183,21 @@ function AdminView({ auth }) {
       }
     }
 
-    try {
-      const updatedAppointment = await updateAppointmentStatus(auth, id, status);
+    if (status === 'remarcar' && !payload) {
+      const appointment = appointments.find((item) => item.id === id) ?? null;
+      setRescheduleTarget(appointment);
+      setRescheduleModalOpen(true);
+      return;
+    }
 
-      setAppointments((current) => current.map((appointment) => (
-        appointment.id === id ? updatedAppointment : appointment
-      )));
+    try {
+      const updatedAppointment = await updateAppointmentStatus(auth, id, status, payload);
+      syncUpdatedAppointment(updatedAppointment);
+      await refreshClients();
       setToast(`Agendamento ${statusLabels[status].toLowerCase()} com sucesso.`);
     } catch (error) {
       setToast(error.message || 'Nao foi possivel atualizar o agendamento.');
+      throw error;
     }
   }
 
@@ -135,6 +215,7 @@ function AdminView({ auth }) {
       setSelectedDate(appointment.date);
       setActiveSection('agenda');
       setDetailOpen(true);
+      await refreshClients();
       setToast('Agendamento criado com sucesso.');
     } catch (error) {
       setToast(error.message || 'Nao foi possivel criar o agendamento.');
@@ -250,7 +331,9 @@ function AdminView({ auth }) {
           />
         )}
         {!loadingData && activeSection === 'solicitacoes' && <RequestsView appointments={appointments} onStatusChange={updateStatus} />}
-        {!loadingData && activeSection === 'clientes' && <ClientsView appointments={appointments} onClientSelect={setClientDetail} />}
+        {!loadingData && activeSection === 'clientes' && (
+          <ClientsView clients={clients} onClientSelect={setClientDetail} onSearchChange={setClientSearch} search={clientSearch} />
+        )}
         {!loadingData && activeSection === 'servicos' && (
           <ServicesView
             services={services}
@@ -294,6 +377,15 @@ function AdminView({ auth }) {
         services={services}
         onClose={() => setAppointmentModalOpen(false)}
         onSubmit={createAppointment}
+      />
+      <RescheduleModal
+        appointment={rescheduleTarget}
+        open={rescheduleModalOpen}
+        onClose={() => {
+          setRescheduleModalOpen(false);
+          setRescheduleTarget(null);
+        }}
+        onSubmit={(payload) => updateStatus(rescheduleTarget.id, 'remarcar', payload)}
       />
       {toast && <div className="toast-message" role="status">{toast}</div>}
     </div>

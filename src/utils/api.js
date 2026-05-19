@@ -134,6 +134,20 @@ function normalizeAppointment(appointment) {
   };
 }
 
+function normalizeClient(client) {
+  const { date: nextDate, time: nextTime } = splitDateTime(client.proximaVisita);
+
+  return {
+    id: client.id,
+    name: client.nome || 'Cliente sem nome',
+    phone: client.telefone || '',
+    email: client.email || '',
+    lastService: client.ultimoServico || 'Sem historico',
+    nextVisit: nextDate ? `${nextDate}${nextTime ? ` ${nextTime}` : ''}` : 'Sem retorno marcado',
+    totalAppointments: Number(client.totalAgendamentos || 0),
+  };
+}
+
 function normalizeService(service) {
   return {
     id: service.id,
@@ -191,8 +205,19 @@ async function bootstrapFirstUser(email, senha) {
   });
 }
 
-async function fetchAppointments(auth) {
-  const payload = await apiRequest('/agendamentos', { auth });
+async function fetchAppointments(auth, filters = {}) {
+  const query = new URLSearchParams();
+
+  if (filters.status && filters.status !== 'todos') {
+    query.set('status', filters.status);
+  }
+
+  if (filters.busca) {
+    query.set('busca', filters.busca);
+  }
+
+  const path = query.size ? `/agendamentos?${query.toString()}` : '/agendamentos';
+  const payload = await apiRequest(path, { auth });
   return Array.isArray(payload) ? payload.map(normalizeAppointment) : [];
 }
 
@@ -205,7 +230,7 @@ async function createAppointment(auth, form) {
   return normalizeAppointment(payload);
 }
 
-async function updateAppointmentStatus(auth, id, status) {
+async function updateAppointmentStatus(auth, id, status, updatePayload) {
   const actionPath = statusActionPath[status];
 
   if (!actionPath) {
@@ -214,10 +239,23 @@ async function updateAppointmentStatus(auth, id, status) {
 
   const payload = await apiRequest(`/agendamentos/${id}/${actionPath}`, {
     auth,
+    body: status === 'remarcar' ? updatePayload : undefined,
     method: 'PUT',
   });
 
   return normalizeAppointment(payload);
+}
+
+async function fetchClients(auth, busca = '') {
+  const query = new URLSearchParams();
+
+  if (busca) {
+    query.set('busca', busca);
+  }
+
+  const path = query.size ? `/clientes?${query.toString()}` : '/clientes';
+  const payload = await apiRequest(path, { auth });
+  return Array.isArray(payload) ? payload.map(normalizeClient) : [];
 }
 
 async function fetchServices(auth) {
@@ -241,6 +279,7 @@ export {
   bootstrapFirstUser,
   createAppointment,
   fetchAppointments,
+  fetchClients,
   fetchServices,
   loginAdmin,
   saveService,
