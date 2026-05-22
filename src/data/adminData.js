@@ -119,12 +119,18 @@ const initialAppointments = [
 ];
 
 const initialServices = [
-  { id: 1, name: 'Botox', category: 'Facial', duration: '45 min', price: 'R$ 690', active: true, published: true, description: 'Suavização de linhas de expressão com planejamento natural.' },
-  { id: 2, name: 'Limpeza de pele', category: 'Facial', duration: '60 min', price: 'R$ 180', active: true, published: true, description: 'Higienização profunda, extração cuidadosa e renovação da pele.' },
-  { id: 3, name: 'Preenchimento labial', category: 'Labial', duration: '50 min', price: 'R$ 850', active: true, published: true, description: 'Definição de contorno e volume com acabamento delicado.' },
-  { id: 4, name: 'Drenagem linfática', category: 'Corporal', duration: '50 min', price: 'R$ 160', active: true, published: true, description: 'Manobras para reduzir retenção e favorecer leveza corporal.' },
-  { id: 5, name: 'Microagulhamento', category: 'Facial', duration: '70 min', price: 'R$ 420', active: true, published: true, description: 'Estímulo controlado para textura, cicatrizes e qualidade cutânea.' },
-  { id: 6, name: 'Peeling', category: 'Facial', duration: '40 min', price: 'R$ 260', active: false, published: false, description: 'Renovação da superfície da pele com protocolo personalizado.' },
+  { id: 1, name: 'Limpeza de pele', category: 'Facial', professional: 'Equipe Lumiere', duration: '60 min', price: 'R$ 180', active: true, published: true, description: 'Higienizacao profunda e renovacao da textura para uma pele mais luminosa e uniforme.' },
+  { id: 2, name: 'Peeling', category: 'Facial', professional: 'Equipe Lumiere', duration: '40 min', price: 'R$ 260', active: true, published: true, description: 'Protocolo para refinamento da superficie da pele com foco em brilho, clareza e renovacao.' },
+  { id: 3, name: 'Microagulhamento', category: 'Facial', professional: 'Equipe Lumiere', duration: '70 min', price: 'R$ 420', active: true, published: true, description: 'Estimulo controlado para favorecer regeneracao, textura e qualidade cutanea.' },
+  { id: 4, name: 'Massagem relaxante', category: 'Bem-estar', professional: 'Equipe Lumiere', duration: '60 min', price: 'R$ 160', active: true, published: true, description: 'Experiencia de bem-estar com ritmo acolhedor e sensacao imediata de alivio corporal.' },
+  { id: 5, name: 'Drenagem linfatica', category: 'Corporal', professional: 'Equipe Lumiere', duration: '50 min', price: 'R$ 160', active: true, published: true, description: 'Manobras especializadas para desinchar, aliviar retencao e favorecer leveza corporal.' },
+  { id: 6, name: 'Preenchimento labial', category: 'Labial', professional: 'Equipe Lumiere', duration: '50 min', price: 'R$ 850', active: true, published: true, description: 'Definicao sutil de contorno, hidratacao e harmonia labial com acabamento refinado.' },
+  { id: 7, name: 'Bioestimulador', category: 'Facial', professional: 'Equipe Lumiere', duration: '60 min', price: 'R$ 900', active: true, published: true, description: 'Tratamento voltado ao estimulo de colageno para firmeza progressiva e aspecto sofisticado.' },
+  { id: 8, name: 'Botox', category: 'Facial', professional: 'Equipe Lumiere', duration: '45 min', price: 'R$ 690', active: true, published: true, description: 'Suavizacao de linhas de expressao com planejamento estetico e naturalidade.' },
+  { id: 9, name: 'Secagem de vasinhos', category: 'Corporal', professional: 'Equipe Lumiere', duration: '45 min', price: 'R$ 350', active: true, published: true, description: 'Cuidado direcionado para melhorar o aspecto visual dos vasinhos com atencao tecnica.' },
+  { id: 10, name: 'Micro labial', category: 'Labial', professional: 'Equipe Lumiere', duration: '60 min', price: 'R$ 650', active: true, published: true, description: 'Realce delicado de cor e definicao para labios com aparencia mais uniforme.' },
+  { id: 11, name: 'Tratamento para gordura localizada', category: 'Corporal', professional: 'Equipe Lumiere', duration: '60 min', price: 'R$ 390', active: true, published: true, description: 'Protocolos focados em contorno corporal com leitura estetica e acompanhamento serio.' },
+  { id: 12, name: 'Enzimas para gordura localizada', category: 'Corporal', professional: 'Equipe Lumiere', duration: '45 min', price: 'R$ 320', active: true, published: true, description: 'Abordagem complementar para areas especificas com estrategia de tratamento mais precisa.' },
 ];
 
 const statusLabels = {
