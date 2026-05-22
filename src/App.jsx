@@ -348,6 +348,11 @@ function AdminView({ auth }) {
           <MetricCard marker="R" label="Remarcacao" value={metrics.reschedule} detail="precisam de novo horario" tone="metric-info" />
         </section>
 
+        <div className="tablet-quick-actions">
+          <button type="button" onClick={() => setAppointmentModalOpen(true)}>Novo agendamento</button>
+          <button type="button" onClick={() => setActiveSection('solicitacoes')}>Pendencias</button>
+        </div>
+
         {loadingData ? (
           <section className="calendar-empty">
             Carregando agenda e servicos do backend...

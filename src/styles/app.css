@@ -693,6 +693,10 @@ a {
   gap: 14px;
 }
 
+.tablet-quick-actions {
+  display: none;
+}
+
 .metric-card,
 .list-panel,
 .detail-panel,
@@ -1667,6 +1671,8 @@ a {
   .admin-shell {
     grid-template-columns: 190px minmax(0, 1fr);
     align-items: stretch;
+    background:
+      linear-gradient(90deg, #102033 0 190px, #f5f1ea 190px 100%);
   }
 
   .sidebar {
@@ -1679,6 +1685,7 @@ a {
     justify-content: flex-start;
     overflow-y: auto;
     padding: 18px;
+    background: transparent;
   }
 
   .sidebar nav {
@@ -1703,35 +1710,40 @@ a {
   }
 
   .topbar-actions {
+    display: none;
+  }
+
+  .tablet-quick-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    order: 2;
-    width: 100%;
-    justify-content: stretch;
-    align-items: center;
-  }
-
-  .topbar-actions input {
-    grid-column: 1 / -1;
+    gap: 10px;
     width: 100%;
   }
 
-  .topbar-actions button {
-    width: 100%;
+  .tablet-quick-actions button {
     min-width: 0;
+    min-height: 42px;
+    border: 0;
+    border-radius: 8px;
     padding: 0 10px;
-    white-space: normal;
+    color: #ffffff;
+    background: #102033;
     font-size: 0.82rem;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .tablet-quick-actions button:last-child {
+    color: #102033;
+    background: #ecdfbd;
   }
 
   .operator {
-    order: 3;
     min-width: auto;
   }
 
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    order: 4;
   }
 
   .metric-card {
