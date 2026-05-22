@@ -401,6 +401,16 @@ a {
   background: #efe3cf;
 }
 
+.login-form .temporary-login-action {
+  color: #7a4c00;
+  background: #fff0bd;
+  box-shadow: inset 0 0 0 1px rgba(161, 116, 34, 0.18);
+}
+
+.login-form .temporary-login-action:hover {
+  background: #f5df95;
+}
+
 .login-form button:disabled,
 .primary-action:disabled {
   cursor: not-allowed;

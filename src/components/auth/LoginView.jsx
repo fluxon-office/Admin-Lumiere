@@ -46,6 +46,7 @@ function LoginView({
   onLogin,
   onPasswordReset,
   onRecoveryCodeRequest,
+  onTemporaryAccess,
   recoveryCodeSent,
 }) {
   const [mode, setMode] = useState('login');
@@ -193,6 +194,9 @@ function LoginView({
               </button>
               <button className="secondary-login-action" disabled={loading} type="button" onClick={() => changeMode('firstAccess')}>
                 Criar primeiro acesso
+              </button>
+              <button className="temporary-login-action" disabled={loading} type="button" onClick={onTemporaryAccess}>
+                Acessar dashboard temporariamente
               </button>
             </form>
           ) : null}

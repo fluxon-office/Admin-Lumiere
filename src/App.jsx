@@ -534,6 +534,16 @@ function App() {
     }
   }
 
+  function handleTemporaryAccess() {
+    setLoginError('');
+    setLoginNotice('Acesso temporario liberado para revisao local.');
+    setAuth({
+      email: 'acesso-temporario@lumiere.local',
+      nome: 'Acesso temporario',
+      senha: 'temporario',
+    });
+  }
+
   if (!auth) {
     return (
       <LoginView
@@ -544,6 +554,7 @@ function App() {
         onLogin={handleLogin}
         onPasswordReset={handlePasswordReset}
         onRecoveryCodeRequest={handleRecoveryCodeRequest}
+        onTemporaryAccess={handleTemporaryAccess}
         recoveryCodeSent={recoveryCodeSent}
       />
     );
