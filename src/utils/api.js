@@ -208,6 +208,43 @@ async function bootstrapFirstUser(email, senha) {
   });
 }
 
+async function bootstrapBusinessAccess(payload) {
+  return apiRequest('/usuarios/bootstrap', {
+    body: {
+      email: payload.ownerEmail,
+      nome: payload.ownerName,
+      senha: payload.password,
+      telefone: payload.ownerPhone,
+      empresa: {
+        cnpj: payload.businessDocument,
+        email: payload.businessEmail,
+        endereco: payload.businessAddress,
+        nome: payload.businessName,
+        telefone: payload.businessPhone,
+      },
+    },
+    method: 'POST',
+  });
+}
+
+async function requestPasswordRecoveryCode(email) {
+  return apiRequest('/auth/recuperacao/codigo', {
+    body: { email },
+    method: 'POST',
+  });
+}
+
+async function resetPasswordWithCode(form) {
+  return apiRequest('/auth/recuperacao/senha', {
+    body: {
+      codigo: form.code,
+      email: form.email,
+      novaSenha: form.password,
+    },
+    method: 'POST',
+  });
+}
+
 async function fetchAppointments(auth, filters = {}) {
   const query = new URLSearchParams();
 
@@ -305,6 +342,7 @@ async function deleteService(auth, id) {
 
 export {
   API_BASE_URL,
+  bootstrapBusinessAccess,
   bootstrapFirstUser,
   createAppointment,
   deleteService,
@@ -312,6 +350,8 @@ export {
   fetchClients,
   fetchServices,
   loginAdmin,
+  requestPasswordRecoveryCode,
+  resetPasswordWithCode,
   saveService,
   updateAppointmentStatus,
 };

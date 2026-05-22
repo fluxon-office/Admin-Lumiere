@@ -1,6 +1,24 @@
 import { useEffect, useState } from 'react';
 import { emptyAppointmentForm } from '../../data/adminData';
 
+function formatPhone(value) {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+
+  if (digits.length <= 2) {
+    return digits;
+  }
+
+  if (digits.length <= 6) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 function AppointmentFormModal({ onClose, onSubmit, open, services }) {
   const [form, setForm] = useState(emptyAppointmentForm);
   const [saving, setSaving] = useState(false);
@@ -13,6 +31,19 @@ function AppointmentFormModal({ onClose, onSubmit, open, services }) {
 
     setForm((current) => ({ ...current, serviceId: String(activeServices[0].id) }));
   }, [activeServices, form.serviceId, open]);
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
 
   if (!open) {
     return null;
@@ -54,7 +85,14 @@ function AppointmentFormModal({ onClose, onSubmit, open, services }) {
           <div className="form-row">
             <label>
               Telefone
-              <input required value={form.phone} onChange={(event) => updateForm('phone', event.target.value)} />
+              <input
+                required
+                inputMode="tel"
+                maxLength="15"
+                placeholder="(11) 99999-9999"
+                value={form.phone}
+                onChange={(event) => updateForm('phone', formatPhone(event.target.value))}
+              />
             </label>
             <label>
               E-mail

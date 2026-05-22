@@ -131,9 +131,7 @@ const initialServices = [
   { id: 10, name: 'Micro labial', category: 'Labial', professional: 'Equipe Lumiere', duration: '60 min', price: 'R$ 650', active: true, published: true, description: 'Realce delicado de cor e definicao para labios com aparencia mais uniforme.' },
   { id: 11, name: 'Tratamento para gordura localizada', category: 'Corporal', professional: 'Equipe Lumiere', duration: '60 min', price: 'R$ 390', active: true, published: true, description: 'Protocolos focados em contorno corporal com leitura estetica e acompanhamento serio.' },
   { id: 12, name: 'Enzimas para gordura localizada', category: 'Corporal', professional: 'Equipe Lumiere', duration: '45 min', price: 'R$ 320', active: true, published: true, description: 'Abordagem complementar para areas especificas com estrategia de tratamento mais precisa.' },
-];
-
-const statusLabels = {
+];const statusLabels = {
   pendente: 'Pendente',
   confirmado: 'Confirmado',
   remarcar: 'Remarcar',

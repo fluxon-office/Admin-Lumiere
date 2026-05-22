@@ -12,6 +12,7 @@ import RequestsView from './components/sections/RequestsView';
 import ServicesView from './components/sections/ServicesView';
 import { navItems, sectionTitles, statusLabels } from './data/adminData';
 import {
+  bootstrapBusinessAccess,
   bootstrapFirstUser,
   createAppointment as createAppointmentRequest,
   deleteService as deleteServiceRequest,
@@ -19,6 +20,8 @@ import {
   fetchClients,
   fetchServices,
   loginAdmin,
+  requestPasswordRecoveryCode,
+  resetPasswordWithCode,
   saveService as saveServiceRequest,
   updateAppointmentStatus,
 } from './utils/api';
@@ -437,9 +440,12 @@ function App() {
   const [auth, setAuth] = useState(null);
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+  const [loginNotice, setLoginNotice] = useState('');
+  const [recoveryCodeSent, setRecoveryCodeSent] = useState(false);
 
   async function handleLogin({ email, senha }) {
     setLoginError('');
+    setLoginNotice('');
     setLoginLoading(true);
 
     try {
@@ -456,20 +462,73 @@ function App() {
     }
   }
 
-  async function handleBootstrap({ email, senha }) {
+  async function handleBootstrap(payload) {
     setLoginError('');
+    setLoginNotice('');
     setLoginLoading(true);
 
     try {
-      await bootstrapFirstUser(email, senha);
-      const response = await loginAdmin(email, senha);
+      const isLegacyPayload = Boolean(payload.email && payload.senha);
+      const accessEmail = isLegacyPayload ? payload.email : payload.ownerEmail;
+      const accessPassword = isLegacyPayload ? payload.senha : payload.password;
+
+      if (!isLegacyPayload && payload.password !== payload.confirmPassword) {
+        throw new Error('As senhas precisam ser iguais para criar o primeiro acesso.');
+      }
+
+      if (isLegacyPayload) {
+        await bootstrapFirstUser(accessEmail, accessPassword);
+      } else {
+        await bootstrapBusinessAccess(payload);
+      }
+
+      const response = await loginAdmin(accessEmail, accessPassword);
       setAuth({
-        email,
-        nome: response?.nome || email,
-        senha,
+        email: accessEmail,
+        nome: response?.nome || accessEmail,
+        senha: accessPassword,
       });
     } catch (error) {
       setLoginError(error.message || 'Nao foi possivel criar o primeiro acesso.');
+    } finally {
+      setLoginLoading(false);
+    }
+  }
+
+  async function handleRecoveryCodeRequest(email) {
+    setLoginError('');
+    setLoginNotice('');
+    setLoginLoading(true);
+
+    try {
+      await requestPasswordRecoveryCode(email);
+      setRecoveryCodeSent(true);
+      setLoginNotice('Codigo enviado. Verifique o e-mail informado.');
+    } catch (error) {
+      setLoginError(error.message || 'Nao foi possivel enviar o codigo de recuperacao.');
+    } finally {
+      setLoginLoading(false);
+    }
+  }
+
+  async function handlePasswordReset(form) {
+    setLoginError('');
+    setLoginNotice('');
+    setLoginLoading(true);
+
+    try {
+      if (form.password !== form.confirmPassword) {
+        throw new Error('As senhas precisam ser iguais.');
+      }
+
+      await resetPasswordWithCode(form);
+
+      setLoginNotice('Senha redefinida com sucesso. Entre com sua nova senha.');
+      setRecoveryCodeSent(false);
+      return true;
+    } catch (error) {
+      setLoginError(error.message || 'Nao foi possivel redefinir a senha.');
+      return false;
     } finally {
       setLoginLoading(false);
     }
@@ -480,8 +539,12 @@ function App() {
       <LoginView
         error={loginError}
         loading={loginLoading}
+        notice={loginNotice}
         onBootstrap={handleBootstrap}
         onLogin={handleLogin}
+        onPasswordReset={handlePasswordReset}
+        onRecoveryCodeRequest={handleRecoveryCodeRequest}
+        recoveryCodeSent={recoveryCodeSent}
       />
     );
   }
