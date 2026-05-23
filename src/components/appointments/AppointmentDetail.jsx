@@ -12,6 +12,11 @@ function AppointmentDetail({ appointment, onClose, onStatusChange }) {
     );
   }
 
+  function handleStatusChange(status) {
+    const popupWindow = window.open('', '_blank', 'noopener,noreferrer');
+    onStatusChange(appointment.id, status, undefined, popupWindow);
+  }
+
   return (
     <aside className="detail-panel">
       <div className="detail-header">
@@ -50,9 +55,9 @@ function AppointmentDetail({ appointment, onClose, onStatusChange }) {
       </div>
 
       <div className="action-row">
-        <button className="button-confirm" onClick={() => onStatusChange(appointment.id, 'confirmado')}>Confirmar</button>
+        <button className="button-confirm" onClick={() => handleStatusChange('confirmado')}>Confirmar</button>
         <button className="button-reschedule" onClick={() => onStatusChange(appointment.id, 'remarcar')}>Remarcar</button>
-        <button className="button-cancel" onClick={() => onStatusChange(appointment.id, 'cancelado')}>Cancelar</button>
+        <button className="button-cancel" onClick={() => handleStatusChange('cancelado')}>Cancelar</button>
       </div>
 
       <div className="contact-actions">

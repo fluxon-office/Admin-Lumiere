@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { formatPhone } from '../../utils/contactUtils';
 
 function RescheduleModal({ appointment, onClose, onSubmit, open }) {
-  const [form, setForm] = useState({ date: '', time: '', notes: '' });
+  const [form, setForm] = useState({ date: '', time: '', notes: '', phone: '' });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -13,6 +14,7 @@ function RescheduleModal({ appointment, onClose, onSubmit, open }) {
       date: appointment.date || new Date().toISOString().slice(0, 10),
       time: appointment.time || '09:00',
       notes: appointment.notes === 'Sem observacoes registradas.' ? '' : (appointment.notes || ''),
+      phone: appointment.phone || '',
     });
   }, [appointment, open]);
 
@@ -27,13 +29,20 @@ function RescheduleModal({ appointment, onClose, onSubmit, open }) {
   async function handleSubmit(event) {
     event.preventDefault();
     setSaving(true);
+    const popupWindow = window.open('', '_blank', 'noopener,noreferrer');
 
     try {
       await onSubmit({
         dataHora: `${form.date}T${form.time}:00`,
         observacao: form.notes,
-      });
+        telefone: form.phone,
+      }, popupWindow);
       onClose();
+    } catch (error) {
+      if (popupWindow && !popupWindow.closed) {
+        popupWindow.close();
+      }
+      throw error;
     } finally {
       setSaving(false);
     }
@@ -64,6 +73,17 @@ function RescheduleModal({ appointment, onClose, onSubmit, open }) {
           <label>
             Observacoes
             <textarea rows="4" value={form.notes} onChange={(event) => updateField('notes', event.target.value)} />
+          </label>
+          <label>
+            Telefone para WhatsApp
+            <input
+              required
+              inputMode="tel"
+              maxLength="15"
+              placeholder="(11) 99999-9999"
+              value={form.phone}
+              onChange={(event) => updateField('phone', formatPhone(event.target.value))}
+            />
           </label>
           <button className="primary-action" disabled={saving} type="submit">
             {saving ? 'Salvando...' : 'Salvar remarcacao'}

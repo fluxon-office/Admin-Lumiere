@@ -213,17 +213,15 @@ async function bootstrapFirstUser(email, senha) {
 async function bootstrapBusinessAccess(payload) {
   return apiRequest('/usuarios/bootstrap', {
     body: {
-      email: payload.ownerEmail,
-      nome: payload.ownerName,
-      senha: payload.password,
-      telefone: payload.ownerPhone,
-      empresa: {
-        cnpj: payload.businessDocument,
-        email: payload.businessEmail,
-        endereco: payload.businessAddress,
-        nome: payload.businessName,
-        telefone: payload.businessPhone,
-      },
+      businessAddress: payload.businessAddress,
+      businessDocument: payload.businessDocument,
+      businessEmail: payload.businessEmail,
+      businessName: payload.businessName,
+      businessPhone: payload.businessPhone,
+      ownerEmail: payload.ownerEmail,
+      ownerName: payload.ownerName,
+      ownerPhone: payload.ownerPhone,
+      password: payload.password,
     },
     method: 'POST',
   });

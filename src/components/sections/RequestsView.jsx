@@ -5,6 +5,14 @@ import { formatDate } from '../../utils/dateUtils';
 function RequestsView({ appointments, onStatusChange }) {
   const requests = appointments.filter((appointment) => ['pendente', 'remarcar'].includes(appointment.status));
 
+  function handleStatusChange(appointmentId, status) {
+    const popupWindow = status === 'remarcar'
+      ? null
+      : window.open('', '_blank', 'noopener,noreferrer');
+
+    onStatusChange(appointmentId, status, undefined, popupWindow);
+  }
+
   return (
     <section className="panel-stack" id="solicitacoes">
       <div className="section-heading">
@@ -33,9 +41,9 @@ function RequestsView({ appointments, onStatusChange }) {
               <a href={`tel:${normalizePhone(appointment.phone)}`}>Ligar</a>
             </div>
             <div className="action-row">
-              <button className="button-confirm" onClick={() => onStatusChange(appointment.id, 'confirmado')}>Confirmar</button>
-              <button className="button-reschedule" onClick={() => onStatusChange(appointment.id, 'remarcar')}>Remarcar</button>
-              <button className="button-cancel" onClick={() => onStatusChange(appointment.id, 'cancelado')}>Cancelar</button>
+              <button className="button-confirm" onClick={() => handleStatusChange(appointment.id, 'confirmado')}>Confirmar</button>
+              <button className="button-reschedule" onClick={() => handleStatusChange(appointment.id, 'remarcar')}>Remarcar</button>
+              <button className="button-cancel" onClick={() => handleStatusChange(appointment.id, 'cancelado')}>Cancelar</button>
             </div>
           </article>
         ))}

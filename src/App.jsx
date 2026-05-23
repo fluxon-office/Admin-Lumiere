@@ -189,12 +189,15 @@ function AdminView({ auth }) {
     setClients(clientsPayload);
   }
 
-  async function updateStatus(id, status, payload) {
+  async function updateStatus(id, status, payload, popupWindow) {
     if (status === 'cancelado') {
       const appointment = appointments.find((item) => item.id === id);
       const confirmed = window.confirm(`Cancelar o agendamento de ${appointment?.client ?? 'cliente selecionada'}?`);
 
       if (!confirmed) {
+        if (popupWindow && !popupWindow.closed) {
+          popupWindow.close();
+        }
         return;
       }
     }
@@ -210,11 +213,20 @@ function AdminView({ auth }) {
       const updatedAppointment = await updateAppointmentStatus(auth, id, status, payload);
       syncUpdatedAppointment(updatedAppointment);
       if (updatedAppointment.whatsappUrl) {
-        window.open(updatedAppointment.whatsappUrl, '_blank', 'noopener,noreferrer');
+        if (popupWindow && !popupWindow.closed) {
+          popupWindow.location.href = updatedAppointment.whatsappUrl;
+        } else {
+          window.open(updatedAppointment.whatsappUrl, '_blank', 'noopener,noreferrer');
+        }
+      } else if (popupWindow && !popupWindow.closed) {
+        popupWindow.close();
       }
       await refreshClients();
       setToast(`Agendamento ${statusLabels[status].toLowerCase()} com sucesso.`);
     } catch (error) {
+      if (popupWindow && !popupWindow.closed) {
+        popupWindow.close();
+      }
       setToast(error.message || 'Nao foi possivel atualizar o agendamento.');
       throw error;
     }
@@ -438,7 +450,7 @@ function AdminView({ auth }) {
           setRescheduleModalOpen(false);
           setRescheduleTarget(null);
         }}
-        onSubmit={(payload) => updateStatus(rescheduleTarget.id, 'remarcar', payload)}
+        onSubmit={(payload, popupWindow) => updateStatus(rescheduleTarget.id, 'remarcar', payload, popupWindow)}
       />
       {toast && <div className="toast-message" role="status">{toast}</div>}
     </div>
