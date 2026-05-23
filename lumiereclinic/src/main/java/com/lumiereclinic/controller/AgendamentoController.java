@@ -38,6 +38,16 @@ public class AgendamentoController {
         return agendamentoService.listarHorariosOcupados(servicoId, dataConvertida);
     }
 
+    @GetMapping("/disponibilidade/agenda")
+    public List<DisponibilidadeResponse> listarAgendaDisponivel(
+            @RequestParam Long servicoId,
+            @RequestParam(required = false) String dataInicial,
+            @RequestParam(defaultValue = "8") int dias
+    ) {
+        LocalDate inicio = dataInicial != null && !dataInicial.isBlank() ? LocalDate.parse(dataInicial) : LocalDate.now().plusDays(1);
+        return agendamentoService.listarAgendaDisponivel(servicoId, inicio, Math.max(1, Math.min(dias, 15)));
+    }
+
     @GetMapping
     public List<Agendamento> listarAgendamentos(
             @RequestParam(required = false) String status,

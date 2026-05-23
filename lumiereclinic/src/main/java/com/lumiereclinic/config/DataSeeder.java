@@ -1,7 +1,9 @@
 package com.lumiereclinic.config;
 
 import com.lumiereclinic.model.Servico;
+import com.lumiereclinic.model.Empresa;
 import com.lumiereclinic.model.Usuario;
+import com.lumiereclinic.repository.EmpresaRepository;
 import com.lumiereclinic.repository.ServicoRepository;
 import com.lumiereclinic.repository.UsuarioRepository;
 import com.lumiereclinic.service.UsuarioService;
@@ -25,13 +27,37 @@ public class DataSeeder {
     @Bean
     CommandLineRunner seedInitialData(
             ServicoRepository servicoRepository,
+            EmpresaRepository empresaRepository,
             UsuarioRepository usuarioRepository,
             BCryptPasswordEncoder passwordEncoder
     ) {
         return args -> {
+            seedCompany(empresaRepository);
             seedAdminUser(usuarioRepository, passwordEncoder);
             seedServices(servicoRepository);
         };
+    }
+
+    private void seedCompany(EmpresaRepository empresaRepository) {
+        if (empresaRepository.existsById(DEFAULT_EMPRESA_ID)) {
+            return;
+        }
+
+        Empresa empresa = new Empresa();
+        empresa.setId(DEFAULT_EMPRESA_ID);
+        empresa.setNome("Lumiere Clinic");
+        empresa.setCnpj("00000000000191");
+        empresa.setEmail(DEFAULT_ADMIN_EMAIL);
+        empresa.setTelefone("11999999999");
+        empresa.setEndereco("Endereco padrao da clinica");
+        empresa.setHorarioSemanaInicio("09:00");
+        empresa.setHorarioSemanaFim("18:00");
+        empresa.setHorarioSabadoInicio("09:00");
+        empresa.setHorarioSabadoFim("12:00");
+        empresa.setIntervaloInicio("12:00");
+        empresa.setIntervaloFim("14:00");
+        empresa.setAtivo(true);
+        empresaRepository.save(empresa);
     }
 
     private void seedAdminUser(UsuarioRepository usuarioRepository, BCryptPasswordEncoder passwordEncoder) {

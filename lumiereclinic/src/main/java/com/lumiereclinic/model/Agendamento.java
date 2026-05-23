@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.lumiereclinic.enums.StatusAgendamento;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDateTime;
 
@@ -42,6 +43,14 @@ public class Agendamento {
 
     @Column(nullable = false)
     private LocalDateTime criadoEm;
+
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String whatsappUrl;
+
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String whatsappMensagem;
 
     @PrePersist
     public void prePersist() {

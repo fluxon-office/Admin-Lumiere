@@ -1,6 +1,6 @@
 package com.lumiereclinic.controller;
 
-import com.lumiereclinic.exception.ResourceBadRequestException;
+import com.lumiereclinic.dto.BootstrapRequest;
 import com.lumiereclinic.model.Usuario;
 import com.lumiereclinic.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +14,8 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @PostMapping("/bootstrap")
-    public Usuario cadastrarPrimeiroUsuario(@RequestBody Usuario usuario) {
-        if (usuarioService.possuiUsuariosCadastrados()) {
-            throw new ResourceBadRequestException("O bootstrap inicial de usuario ja foi realizado");
-        }
-
-        return usuarioService.cadastrarUsuario(usuario);
+    public Usuario cadastrarPrimeiroUsuario(@RequestBody BootstrapRequest request) {
+        return usuarioService.bootstrapPrimeiroAcesso(request);
     }
 
     @PostMapping

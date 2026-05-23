@@ -52,9 +52,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/usuarios/bootstrap").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/recuperacao/codigo").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/recuperacao/senha").permitAll()
                         .requestMatchers(HttpMethod.GET, "/servicos").permitAll()
                         .requestMatchers(HttpMethod.POST, "/agendamentos/publico").permitAll()
                         .requestMatchers(HttpMethod.GET, "/agendamentos/disponibilidade").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/agendamentos/disponibilidade/agenda").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());

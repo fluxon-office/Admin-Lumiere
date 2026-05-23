@@ -10,5 +10,6 @@ import java.util.List;
 public class DisponibilidadeResponse {
     private Long servicoId;
     private String data;
+    private List<String> horariosDisponiveis;
     private List<String> horariosOcupados;
 }
