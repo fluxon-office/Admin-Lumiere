@@ -13,8 +13,7 @@ function AppointmentDetail({ appointment, onClose, onStatusChange }) {
   }
 
   function handleStatusChange(status) {
-    const popupWindow = window.open('', '_blank', 'noopener,noreferrer');
-    onStatusChange(appointment.id, status, undefined, popupWindow);
+    onStatusChange(appointment.id, status);
   }
 
   return (

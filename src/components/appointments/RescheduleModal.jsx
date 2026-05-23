@@ -29,20 +29,13 @@ function RescheduleModal({ appointment, onClose, onSubmit, open }) {
   async function handleSubmit(event) {
     event.preventDefault();
     setSaving(true);
-    const popupWindow = window.open('', '_blank', 'noopener,noreferrer');
-
     try {
       await onSubmit({
         dataHora: `${form.date}T${form.time}:00`,
         observacao: form.notes,
         telefone: form.phone,
-      }, popupWindow);
+      });
       onClose();
-    } catch (error) {
-      if (popupWindow && !popupWindow.closed) {
-        popupWindow.close();
-      }
-      throw error;
     } finally {
       setSaving(false);
     }

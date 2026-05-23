@@ -6,11 +6,7 @@ function RequestsView({ appointments, onStatusChange }) {
   const requests = appointments.filter((appointment) => ['pendente', 'remarcar'].includes(appointment.status));
 
   function handleStatusChange(appointmentId, status) {
-    const popupWindow = status === 'remarcar'
-      ? null
-      : window.open('', '_blank', 'noopener,noreferrer');
-
-    onStatusChange(appointmentId, status, undefined, popupWindow);
+    onStatusChange(appointmentId, status);
   }
 
   return (
