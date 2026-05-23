@@ -127,6 +127,8 @@ function normalizeAppointment(appointment) {
     status,
     source: 'Sistema',
     notes: appointment.observacao || 'Sem observacoes registradas.',
+    whatsappUrl: appointment.whatsappUrl || '',
+    whatsappMessage: appointment.whatsappMensagem || '',
     history: [
       `Solicitado em ${splitDateTime(appointment.criadoEm).date || date}`,
       `Status atual: ${status}`,
@@ -261,6 +263,19 @@ async function fetchAppointments(auth, filters = {}) {
   return Array.isArray(payload) ? payload.map(normalizeAppointment) : [];
 }
 
+async function fetchAvailabilityPreview(servicoId, dataInicial, dias = 8) {
+  const query = new URLSearchParams({
+    servicoId: String(servicoId),
+    dias: String(dias),
+  });
+
+  if (dataInicial) {
+    query.set('dataInicial', dataInicial);
+  }
+
+  return apiRequest(`/agendamentos/disponibilidade/agenda?${query.toString()}`);
+}
+
 async function createAppointment(auth, form) {
   const payload = await apiRequest('/agendamentos', {
     auth,
@@ -347,6 +362,7 @@ export {
   createAppointment,
   deleteService,
   fetchAppointments,
+  fetchAvailabilityPreview,
   fetchClients,
   fetchServices,
   loginAdmin,

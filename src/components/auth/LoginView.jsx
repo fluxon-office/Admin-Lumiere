@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import logoImage from '../../assets/logolumiere.jpeg';
+import { formatPhone } from '../../utils/contactUtils';
 
 const recoveryInitialState = {
   code: '',
@@ -294,7 +295,7 @@ function LoginView({
                     value={firstAccessForm.businessPhone}
                     inputMode="tel"
                     autoComplete="tel"
-                    onChange={(event) => updateFirstAccessForm('businessPhone', event.target.value)}
+                    onChange={(event) => updateFirstAccessForm('businessPhone', formatPhone(event.target.value))}
                   />
                 </label>
               </div>
@@ -346,7 +347,7 @@ function LoginView({
                     value={firstAccessForm.ownerPhone}
                     inputMode="tel"
                     autoComplete="tel"
-                    onChange={(event) => updateFirstAccessForm('ownerPhone', event.target.value)}
+                    onChange={(event) => updateFirstAccessForm('ownerPhone', formatPhone(event.target.value))}
                   />
                 </label>
               </div>

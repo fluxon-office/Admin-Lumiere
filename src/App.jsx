@@ -25,6 +25,7 @@ import {
   saveService as saveServiceRequest,
   updateAppointmentStatus,
 } from './utils/api';
+import { isValidPhone } from './utils/contactUtils';
 
 function AdminView({ auth }) {
   const [appointments, setAppointments] = useState([]);
@@ -208,6 +209,9 @@ function AdminView({ auth }) {
     try {
       const updatedAppointment = await updateAppointmentStatus(auth, id, status, payload);
       syncUpdatedAppointment(updatedAppointment);
+      if (updatedAppointment.whatsappUrl) {
+        window.open(updatedAppointment.whatsappUrl, '_blank', 'noopener,noreferrer');
+      }
       await refreshClients();
       setToast(`Agendamento ${statusLabels[status].toLowerCase()} com sucesso.`);
     } catch (error) {
@@ -481,6 +485,10 @@ function App() {
         throw new Error('As senhas precisam ser iguais para criar o primeiro acesso.');
       }
 
+      if (!isLegacyPayload && (!isValidPhone(payload.businessPhone) || !isValidPhone(payload.ownerPhone))) {
+        throw new Error('Preencha telefones validos para o negocio e para o responsavel.');
+      }
+
       if (isLegacyPayload) {
         await bootstrapFirstUser(accessEmail, accessPassword);
       } else {
@@ -506,9 +514,9 @@ function App() {
     setLoginLoading(true);
 
     try {
-      await requestPasswordRecoveryCode(email);
+      const response = await requestPasswordRecoveryCode(email);
       setRecoveryCodeSent(true);
-      setLoginNotice('Codigo enviado. Verifique o e-mail informado.');
+      setLoginNotice(response?.mensagem || 'Codigo enviado. Verifique o e-mail informado.');
     } catch (error) {
       setLoginError(error.message || 'Nao foi possivel enviar o codigo de recuperacao.');
     } finally {
