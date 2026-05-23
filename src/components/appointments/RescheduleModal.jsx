@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { formatPhone } from '../../utils/contactUtils';
+import { formatPhone, normalizePhone } from '../../utils/contactUtils';
 
 function RescheduleModal({ appointment, onClose, onSubmit, open }) {
   const [form, setForm] = useState({ date: '', time: '', notes: '', phone: '' });
@@ -33,7 +33,7 @@ function RescheduleModal({ appointment, onClose, onSubmit, open }) {
       await onSubmit({
         dataHora: `${form.date}T${form.time}:00`,
         observacao: form.notes,
-        telefone: form.phone,
+        telefone: normalizePhone(form.phone),
       });
       onClose();
     } finally {

@@ -124,6 +124,10 @@ public class AgendamentoService {
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento nao encontrado"));
 
+        if (agendamento.getCliente() == null || agendamento.getServico() == null) {
+            throw new ResourceBadRequestException("Agendamento incompleto para remarcacao");
+        }
+
         if (request.getDataHora().isBefore(LocalDateTime.now())) {
             throw new ResourceBadRequestException("Nao e possivel remarcar para uma data passada");
         }
@@ -146,9 +150,13 @@ public class AgendamentoService {
             agendamento.setObservacao(request.getObservacao().trim());
         }
 
-        Agendamento salvo = agendamentoRepository.save(agendamento);
-        aplicarMensagemWhatsapp(salvo, "remarcacao");
-        return salvo;
+        try {
+            Agendamento salvo = agendamentoRepository.save(agendamento);
+            aplicarMensagemWhatsapp(salvo, "remarcacao");
+            return salvo;
+        } catch (DataIntegrityViolationException ex) {
+            throw new ResourceBadRequestException("Horario ja ocupado para o servico selecionado");
+        }
     }
 
     public Agendamento cancelarAgendamento(Long id) {
