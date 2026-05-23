@@ -30,6 +30,7 @@ import java.util.UUID;
 public class UsuarioService implements UserDetailsService {
 
     public static final String DEFAULT_EMPRESA_ID = "lumiere-clinic";
+    private static final String DEFAULT_ADMIN_EMAIL = "fluxon@gmail.com";
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -85,7 +86,7 @@ public class UsuarioService implements UserDetailsService {
     }
 
     public Usuario bootstrapPrimeiroAcesso(BootstrapRequest request) {
-        if (possuiUsuariosCadastrados()) {
+        if (possuiUsuariosCadastrados() && !podeSubstituirSeedPadrao()) {
             throw new ResourceBadRequestException("O bootstrap inicial de usuario ja foi realizado");
         }
 
@@ -164,8 +165,10 @@ public class UsuarioService implements UserDetailsService {
         validarTelefone(request.getOwnerPhone());
         validarTelefone(request.getBusinessPhone());
 
-        Empresa empresa = new Empresa();
-        empresa.setId(UUID.randomUUID().toString());
+        Empresa empresa = empresaRepository.findById(DEFAULT_EMPRESA_ID).orElseGet(Empresa::new);
+        if (empresa.getId() == null || DEFAULT_EMPRESA_ID.equals(empresa.getId())) {
+            empresa.setId(UUID.randomUUID().toString());
+        }
         empresa.setNome(request.getBusinessName());
         empresa.setCnpj(PhoneUtils.normalize(request.getBusinessDocument()));
         empresa.setEmail(request.getBusinessEmail());
@@ -180,7 +183,9 @@ public class UsuarioService implements UserDetailsService {
         empresa.setAtivo(true);
         empresaRepository.save(empresa);
 
-        Usuario usuario = new Usuario();
+        Usuario usuario = usuarioRepository.findByEmail(DEFAULT_ADMIN_EMAIL)
+                .filter(existing -> usuarioRepository.count() == 1)
+                .orElseGet(Usuario::new);
         usuario.setEmail(request.getOwnerEmail());
         usuario.setNome(request.getOwnerName());
         usuario.setSenha(request.getPassword());
@@ -198,5 +203,10 @@ public class UsuarioService implements UserDetailsService {
         if (!PhoneUtils.isValid(telefone)) {
             throw new ResourceBadRequestException("Telefone invalido");
         }
+    }
+
+    private boolean podeSubstituirSeedPadrao() {
+        return usuarioRepository.count() == 1
+                && usuarioRepository.findByEmail(DEFAULT_ADMIN_EMAIL).isPresent();
     }
 }
