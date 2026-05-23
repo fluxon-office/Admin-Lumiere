@@ -44,6 +44,9 @@ public class UsuarioService implements UserDetailsService {
     @Autowired
     private PasswordRecoveryTokenRepository passwordRecoveryTokenRepository;
 
+    @Autowired
+    private EmailService emailService;
+
     public Usuario cadastrarUsuario(Usuario usuario) {
         Optional<Usuario> usuarioExistente = usuarioRepository.findByEmail(usuario.getEmail());
 
@@ -116,7 +119,13 @@ public class UsuarioService implements UserDetailsService {
         token.setUtilizadoEm(null);
         passwordRecoveryTokenRepository.save(token);
 
-        return new SimpleMessageResponse("Codigo de recuperacao gerado: " + codigo);
+        boolean emailSent = emailService.sendPasswordRecoveryCode(usuario.getEmail(), codigo);
+
+        if (emailSent) {
+            return new SimpleMessageResponse("Codigo enviado para o e-mail informado.");
+        }
+
+        return new SimpleMessageResponse("E-mail nao configurado. Codigo de recuperacao gerado: " + codigo);
     }
 
     public SimpleMessageResponse redefinirSenha(PasswordResetRequest request) {
