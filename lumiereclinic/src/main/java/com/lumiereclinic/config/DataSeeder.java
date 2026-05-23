@@ -19,6 +19,7 @@ public class DataSeeder {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
     private static final String DEFAULT_ADMIN_EMAIL = "fluxon@gmail.com";
+    private static final String DEFAULT_ADMIN_PASSWORD = "123";
     private static final String DEFAULT_EMPRESA_ID = UsuarioService.DEFAULT_EMPRESA_ID;
 
     @Bean
@@ -38,12 +39,15 @@ public class DataSeeder {
         Usuario usuario = usuarios.stream().findFirst().orElseGet(Usuario::new);
 
         if (usuarios.size() > 1) {
-            log.warn("Foram encontrados {} usuarios com o e-mail {}. O seed vai reutilizar apenas o primeiro registro.", usuarios.size(), DEFAULT_ADMIN_EMAIL);
+            log.warn("Foram encontrados {} usuarios com o e-mail {}. O seed vai manter apenas o primeiro registro.", usuarios.size(), DEFAULT_ADMIN_EMAIL);
+            usuarioRepository.deleteAll(usuarios.subList(1, usuarios.size()));
         }
 
         usuario.setNome("Fluxon Admin");
         usuario.setEmail(DEFAULT_ADMIN_EMAIL);
-        usuario.setSenha(passwordEncoder.encode("123"));
+        if (usuario.getSenha() == null || !passwordEncoder.matches(DEFAULT_ADMIN_PASSWORD, usuario.getSenha())) {
+            usuario.setSenha(passwordEncoder.encode(DEFAULT_ADMIN_PASSWORD));
+        }
         usuario.setTelefone("00000000000");
         usuario.setEmpresaId(DEFAULT_EMPRESA_ID);
 
